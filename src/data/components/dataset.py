@@ -65,4 +65,4 @@ class SegmentationDataset(Dataset):
         return transformed_image, transformed_label, metadata
 
     def __len__(self):
-        return len(self.list_paths_images)
+        return len(self.patchs)
