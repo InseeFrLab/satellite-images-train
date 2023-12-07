@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from albumentations import Compose
 from astrovision.data import SatelliteImage
+from s3fs import S3FileSystem
 from torch.utils.data import Dataset
 
 
@@ -24,12 +25,17 @@ class SegmentationDataset(Dataset):
         patchs: List,
         labels: List,
         n_bands: int,
-        transforms: Optional[Compose] = None,
+        fs: S3FileSystem,
+        transform: Optional[Compose] = None,
     ):
         """
         Constructor.
         """
-        return
+        self.patchs = patchs
+        self.labels = labels
+        self.n_bands = n_bands
+        self.fs = fs
+        self.transform = transform
 
     def __getitem__(self, idx):
         """_summary_
@@ -44,23 +50,19 @@ class SegmentationDataset(Dataset):
             idx = idx.tolist()
 
         si = SatelliteImage.from_raster(
-            file_path=self.patchs[idx], dep=None, date=None, n_bands=self.n_bands
+            file_path=f"s3://{self.patchs[idx]}", dep=None, date=None, n_bands=self.n_bands
         )
 
-        # TODO: Le transpose sera intégré dans asrovision donc à virer
-        si.array = np.transpose(si.array, [1, 2, 0])
-        img = si.array
+        label = torch.LongTensor(np.load(self.fs.open(f"s3://{self.labels[idx]}")))
 
-        label = torch.LongTensor(np.load(self.labels[idx]))
+        sample = self.transform(image=np.transpose(si.array, [1, 2, 0]), label=label)
 
-        if self.transforms:
-            sample = self.transforms(image=img, label=label)
-            img = sample["image"]
-            label = sample["label"]
+        transformed_image = sample["image"]
+        transformed_label = sample["label"]
 
         metadata = {"path_image": self.patchs[idx], "path_label": self.labels[idx]}
 
-        return img, label, metadata
+        return transformed_image, transformed_label, metadata
 
     def __len__(self):
         return len(self.list_paths_images)
