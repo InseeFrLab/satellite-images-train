@@ -3,6 +3,7 @@ Main script.
 """
 
 import sys
+from typing import Dict, List
 
 import albumentations as A
 import mlflow
@@ -11,7 +12,7 @@ from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
 from data.components.dataset import SegmentationDataset
-from functions import download_data
+from functions import download_data, trainers
 
 source = "PLEIADES"
 dep = "GUADELOUPE"
@@ -23,16 +24,21 @@ tiles_size = 250
 
 
 def main(
-    remote_server_uri,
-    experiment_name,
-    run_name,
-    task,
-    source,
-    dep,
-    year,
-    tiles_size,
-    type_labeler,
-    n_bands,
+    remote_server_uri: str,
+    experiment_name: str,
+    run_name: str,
+    task: str,
+    source: str,
+    dep: str,
+    year: str,
+    tiles_size: str,
+    type_labeler: str,
+    n_bands: str,
+    earlystop: Dict,
+    checkpoints: List[Dict],
+    max_epochs: int,
+    num_sanity_val_steps: int,
+    accumulate_batch: int,
 ):
     """
     Main method.
@@ -82,8 +88,11 @@ def main(
         train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
         val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+        trainer = trainers.get_trainer(
+            earlystop, checkpoints, max_epochs, num_sanity_val_steps, accumulate_batch
+        )
 
-        return train_loader, test_loader, val_loader
+        return train_loader, test_loader, val_loader, trainer
 
     # 1- Download data ? Est ce qu'on peut donner des path s3 au dataloader ?
     # 2- Prepare data (filtrer certaines images sans maison ? balancing)
