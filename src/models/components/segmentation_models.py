@@ -1,40 +1,28 @@
-import torch
-import torch.multiprocessing as multiprocessing
 import torchvision
 from torch import nn
-from torchvision.models.resnet import ResNet50_Weights
-
-# Increase the shared memory limit
-multiprocessing.set_sharing_strategy("file_system")
 
 
-class ResNet50Module(nn.Module):
+class DeepLabv3Module(nn.Module):
     """
-    Finetuned ResNet50 model for binary classification.
+    From the paper https://arxiv.org/abs/1706.05587
+    segmentation model using atrous convolution to
+    take into account multiscales effect
 
-    The model is based on the ResNet50 architecture and has been trained on a
-    specific task to classify inputs into two labels.
-
-    Args:
-        n_channel: (int) number of channels of the input image
-
-    Returns:
-        torch.Tensor: The output tensor containing the probabilities
-        for each class.
+    n_channel: (int) number of channels of the input image
     """
 
-    def __init__(self, nchannel=3):
+    def __init__(self, n_channel=3):
+        """ """
         super().__init__()
-        # Load the pre-trained ResNet50 model
-        self.model = torchvision.models.resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.model = torchvision.models.segmentation.deeplabv3_resnet101(
+            weights="DeepLabV3_ResNet101_Weights.DEFAULT"
+        )
+        # 1 classe !
+        self.model.classifier[4] = nn.Conv2d(256, 2, kernel_size=(1, 1), stride=(1, 1))
 
-        # Replace the last fully connected layer
-        self.model.fc = nn.Linear(2048, 2)
-        self.softmax = nn.Softmax(dim=1)
-
-        if nchannel != 3:
-            self.model.conv1 = nn.Conv2d(
-                nchannel,
+        if n_channel != 3:
+            self.model.backbone["conv1"] = nn.Conv2d(
+                n_channel,
                 64,
                 kernel_size=(7, 7),
                 stride=(2, 2),
@@ -42,18 +30,6 @@ class ResNet50Module(nn.Module):
                 bias=False,
             )
 
-    def forward(self, input):
-        """
-        Performs the forward pass of the model.
-
-        Args:
-            input (torch.Tensor): The input tensor.
-
-        Returns:
-            torch.Tensor: The output probabilities after applying the
-            softmax activation.
-        """
-        output = self.model(input)
-        probabilities = torch.softmax(output, dim=1)
-
-        return probabilities
+    def forward(self, x):
+        """ """
+        return self.model(x)["out"]
