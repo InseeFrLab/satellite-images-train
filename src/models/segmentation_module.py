@@ -3,8 +3,9 @@
 from typing import Dict, Union
 
 import pytorch_lightning as pl
-from classes.optim.evaluation_model import calculate_IOU
 from torch import nn, optim
+
+from optim.metrics import IOU
 
 
 class SegmentationModule(pl.LightningModule):
@@ -81,9 +82,9 @@ class SegmentationModule(pl.LightningModule):
 
         output = self.forward(images)
         loss = self.loss(output, labels)
-        IOU = calculate_IOU(output, labels)
+        metrics = IOU(output, labels)
 
-        self.log("validation_IOU", IOU, on_epoch=True)
+        self.log("validation_IOU", metrics, on_epoch=True)
         self.log("validation_loss", loss, on_epoch=True)
 
         return loss
@@ -102,8 +103,8 @@ class SegmentationModule(pl.LightningModule):
         loss = self.loss(output, labels)
         self.log("test_loss", loss, on_epoch=True)
 
-        IOU = calculate_IOU(output, labels)
-        self.log("test IOU", IOU, on_epoch=True)
+        metrics = IOU(output, labels)
+        self.log("test IOU", metrics, on_epoch=True)
 
         return IOU
 
