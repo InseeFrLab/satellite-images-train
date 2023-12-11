@@ -24,10 +24,8 @@ type_labeler = "BDTOPO"
 task = "segmentation"
 tiles_size = 250
 experiment_name = "default"
-earlystop = {"monitor": "validation_accuracy", "patience": 35, "mode": "max"}
-checkpoints = [
-    {"monitor": "validation_accuracy", "save_top_k": 1, "save_last": True, "mode": "max"}
-]
+earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
+checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]
 max_epochs = 2
 num_sanity_val_steps = 2
 accumulate_batch = 8
