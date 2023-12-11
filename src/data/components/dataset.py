@@ -53,13 +53,13 @@ class SegmentationDataset(Dataset):
         if self.from_s3:
             fs = get_file_system()
             si = SatelliteImage.from_raster(
-                file_path=f"s3://{self.patchs[idx]}", dep=None, date=None, n_bands=self.n_bands
+                file_path=f"s3://{self.patchs[idx]}", dep=None, date=None, n_bands=int(self.n_bands)
             )
 
             label = torch.LongTensor(np.load(fs.open(f"s3://{self.labels[idx]}")))
         else:
             si = SatelliteImage.from_raster(
-                file_path=self.patchs[idx], dep=None, date=None, n_bands=self.n_bands
+                file_path=self.patchs[idx], dep=None, date=None, n_bands=int(self.n_bands)
             )
 
             label = torch.LongTensor(np.load(self.labels[idx]))
