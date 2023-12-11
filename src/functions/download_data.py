@@ -49,8 +49,8 @@ def get_patchs_labels(
 
         download_data(patchs_path, labels_path, task, source, dep, year, tiles_size, type_labeler)
 
-        patchs = os.listdir(patchs_path)
-        labels = os.listdir(labels_path)
+        patchs = [f"{patchs_path}/{filename}" for filename in os.listdir(patchs_path)]
+        labels = [f"{labels_path}/{filename}" for filename in os.listdir(labels_path)]
 
     return patchs, labels
 
