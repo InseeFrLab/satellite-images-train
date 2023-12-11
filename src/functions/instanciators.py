@@ -80,7 +80,7 @@ def get_dataset(
         return dataset_dict[task](patchs, labels, n_bands, fs, transform)
 
 
-def get_model(module_name: str, n_channel: int):
+def get_model(module_name: str, n_bands: str):
     """
     Instantiate a module based on the provided module type.
 
@@ -93,7 +93,7 @@ def get_model(module_name: str, n_channel: int):
     if module_name not in module_dict:
         raise ValueError("Invalid module type")
 
-    return module_dict[module_name](n_channel)
+    return module_dict[module_name](n_bands)
 
 
 def get_loss(loss_name: str):
@@ -118,7 +118,7 @@ def get_loss(loss_name: str):
 def get_lightning_module(
     module_name: str,
     loss_name: str,
-    n_channel: int,
+    n_bands: str,
     task: str,
     lr: float,
     momentum: float,
@@ -143,7 +143,7 @@ def get_lightning_module(
     else:
         LightningModule = task_dict[task]
 
-    model = get_model(module_name, n_channel)
+    model = get_model(module_name, n_bands)
     loss = get_loss(loss_name)
 
     # TODO: faire get_optimizer with kwargs
