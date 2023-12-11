@@ -160,8 +160,8 @@ def get_lightning_module(
     scheduler_interval = "epoch"
 
     lightning_module = LightningModule(
-        model=model(),
-        loss=loss(),
+        model=model,
+        loss=loss,
         optimizer=optimizer,
         optimizer_params=optimizer_params,
         scheduler=scheduler,
