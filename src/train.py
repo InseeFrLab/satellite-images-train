@@ -16,26 +16,25 @@ from torch.utils.data import DataLoader, random_split
 from functions.download_data import get_patchs_labels
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 
-source = "PLEIADES"
-dep = "GUADELOUPE"
-year = "2020"
-n_bands = 3
-type_labeler = "BDTOPO"
-task = "segmentation"
-tiles_size = 250
-experiment_name = "default"
-earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
-checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]
-max_epochs = 2
-num_sanity_val_steps = 2
-accumulate_batch = 8
-module_name = "deeplabv3"
-loss_name = "crossentropy"
-n_channel = 3
-lr = 0.0001
-momentum = 0.9
-scheduler_patience = 10
-from_s3 = False
+# source = "PLEIADES"
+# dep = "GUADELOUPE"
+# year = "2020"
+# n_bands = 3
+# type_labeler = "BDTOPO"
+# task = "segmentation"
+# tiles_size = 250
+# experiment_name = "default"
+# earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
+# checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]
+# max_epochs = 2
+# num_sanity_val_steps = 2
+# accumulate_batch = 8
+# module_name = "deeplabv3"
+# loss_name = "crossentropy"
+# lr = 0.0001
+# momentum = 0.9
+# scheduler_patience = 10
+# from_s3 = False
 
 
 def main(
@@ -56,14 +55,17 @@ def main(
     accumulate_batch: int,
     module_name: str,
     loss_name: str,
-    n_channel: int,
     lr: float,
     momentum: float,
     scheduler_patience: int,
+    from_s3: bool,
 ):
     """
     Main method.
     """
+
+    earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
+    checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]
 
     mlflow.set_tracking_uri(remote_server_uri)
     mlflow.set_experiment(experiment_name)
@@ -109,7 +111,7 @@ def main(
         light_module = get_lightning_module(
             module_name,
             loss_name,
-            n_channel,
+            n_bands,
             task,
             lr,
             momentum,
@@ -137,6 +139,28 @@ def main(
 
 
 if __name__ == "__main__":
+    print(sys.argv[1])
+    print(sys.argv[2])
+    print(sys.argv[3])
+    print(sys.argv[4])
+    print(sys.argv[5])
+    print(sys.argv[6])
+    print(sys.argv[7])
+    print(sys.argv[8])
+    print(sys.argv[9])
+    print(sys.argv[10])
+    print(sys.argv[11])
+    print(sys.argv[12])
+    print(sys.argv[13])
+    print(sys.argv[14])
+    print(sys.argv[15])
+    print(sys.argv[16])
+    print(sys.argv[17])
+    print(sys.argv[18])
+    print(sys.argv[19])
+    print(sys.argv[20])
+    print(sys.argv[21])
+
     main(
         str(sys.argv[1]),
         str(sys.argv[2]),
@@ -150,13 +174,13 @@ if __name__ == "__main__":
         str(sys.argv[10]),
         str(sys.argv[11]),
         str(sys.argv[12]),
-        str(sys.argv[13]),
-        str(sys.argv[14]),
-        str(sys.argv[15]),
+        int(sys.argv[13]),
+        int(sys.argv[14]),
+        int(sys.argv[15]),
         str(sys.argv[16]),
         str(sys.argv[17]),
-        str(sys.argv[18]),
-        str(sys.argv[19]),
-        str(sys.argv[20]),
-        str(sys.argv[21]),
+        float(sys.argv[18]),
+        float(sys.argv[19]),
+        int(sys.argv[20]),
+        bool(sys.argv[21]),
     )
