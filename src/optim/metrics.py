@@ -1,7 +1,7 @@
 import torch
 
 
-def calculate_IOU(output, labels):
+def IOU(output, labels):
     """
     Calculate Intersection Over Union indicator
     based on output segmentation mask of a model
