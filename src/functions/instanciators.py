@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 
 import pytorch_lightning as pl
+import torch
 from albumentations import Compose
 from pytorch_lightning.callbacks import (
     EarlyStopping,
@@ -13,7 +14,6 @@ from config.dataset import dataset_dict
 from config.loss import loss_dict
 from config.module import module_dict
 from config.task import task_dict
-from optim.optimizer import generate_optimization_elements
 
 
 def get_trainer(
@@ -137,7 +137,6 @@ def get_lightning_module(
     Returns:
         A PyTorch Lightning module for segmentation.
     """
-    list_params = generate_optimization_elements(lr, momentum, earlystop, scheduler_patience)
 
     if task not in task_dict:
         raise ValueError("Invalid task type")
@@ -147,14 +146,27 @@ def get_lightning_module(
     model = get_model(module_name, n_channel)
     loss = get_loss(loss_name)
 
+    # TODO: faire get_optimizer with kwargs
+    optimizer = torch.optim.SGD
+    optimizer_params = {"lr": lr, "momentum": momentum}
+
+    # TODO: faire get_scheduler with kwargs
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau
+    scheduler_params = {
+        "monitor": earlystop["monitor"],
+        "mode": earlystop["mode"],
+        "patience": scheduler_patience,
+    }
+    scheduler_interval = "epoch"
+
     lightning_module = LightningModule(
         model=model(),
         loss=loss(),
-        optimizer=list_params[0],
-        optimizer_params=list_params[1],
-        scheduler=list_params[2],
-        scheduler_params=list_params[3],
-        scheduler_interval=list_params[4],
+        optimizer=optimizer,
+        optimizer_params=optimizer_params,
+        scheduler=scheduler,
+        scheduler_params=scheduler_params,
+        scheduler_interval=scheduler_interval,
     )
 
     return lightning_module
