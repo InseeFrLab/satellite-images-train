@@ -13,7 +13,7 @@ from albumentations.pytorch.transforms import ToTensorV2
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
-from functions.download_data import get_file_system
+from functions.download_data import get_patchs_labels
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 
 source = "PLEIADES"
@@ -37,6 +37,7 @@ n_channel = 3
 lr = 0.0001
 momentum = 0.9
 scheduler_patience = 10
+from_s3 = False
 
 
 def main(
@@ -70,25 +71,13 @@ def main(
     mlflow.set_experiment(experiment_name)
     with mlflow.start_run(run_name=run_name):
         mlflow.autolog()
-        fs = get_file_system()
 
-        # 1- Get patch paths from s3
-        patchs = fs.ls(
-            (
-                f"projet-slums-detection/data-preprocessed/patchs/"
-                f"{task}/{source}/{dep}/{year}/{tiles_size}"
-            )
+        # Get patchs and labels
+        patchs, labels = get_patchs_labels(
+            from_s3, task, source, dep, year, tiles_size, type_labeler
         )
 
-        # 2- Get label paths from s3
-        labels = fs.ls(
-            (
-                f"projet-slums-detection/data-preprocessed/labels/"
-                f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}"
-            )
-        )
-
-        # 3- Define the transforms to apply
+        # 2- Define the transforms to apply
         transform = A.Compose(
             [
                 A.RandomResizedCrop(*(tiles_size,) * 2, scale=(0.7, 1.0), ratio=(0.7, 1)),
@@ -102,19 +91,19 @@ def main(
             ]
         )
 
-        # 4- Retrieve the Dataset object given the params
+        # 3- Retrieve the Dataset object given the params
         # TODO: mettre en Params comme Tom a fait dans formation-mlops
-        dataset = get_dataset(task, patchs, labels, n_bands, fs, transform)
+        dataset = get_dataset(task, patchs, labels, n_bands, from_s3, transform)
 
-        # 5- Use random_split to split the dataset
+        # 4- Use random_split to split the dataset
         generator = Generator().manual_seed(2023)
         train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=generator)
 
-        # 6- Create data loaders
+        # 5- Create data loaders
         train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
 
-        # 7- Create the trainer and the lightning
+        # 6- Create the trainer and the lightning
         trainer = get_trainer(
             earlystop, checkpoints, max_epochs, num_sanity_val_steps, accumulate_batch
         )
@@ -130,13 +119,13 @@ def main(
             scheduler_patience,
         )
 
-        # 8- Training the model on the training set
+        # 7- Training the model on the training set
         torch.cuda.empty_cache()
         gc.collect()
 
         trainer.fit(light_module, train_loader, val_loader)
 
-        # 9- Inference on the validation set
+        # 8- Inference on the validation set
         # light_module.eval()
         # with torch.no_grad():
         #     for inputs, targets in val_loader:
