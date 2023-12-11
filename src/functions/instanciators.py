@@ -1,12 +1,15 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pytorch_lightning as pl
+from albumentations import Compose
 from pytorch_lightning.callbacks import (
     EarlyStopping,
     LearningRateMonitor,
     ModelCheckpoint,
 )
+from s3fs import S3FileSystem
 
+from config.dataset import dataset_dict
 from config.loss import loss_dict
 from config.module import module_dict
 from config.task import task_dict
@@ -51,6 +54,30 @@ def get_trainer(
     )
 
     return trainer
+
+
+def get_dataset(
+    task: str,
+    patchs: List,
+    labels: List,
+    n_bands: int,
+    fs: S3FileSystem,
+    transform: Optional[Compose] = None,
+):
+    """
+    intantiates a dataset given a task.
+
+    Args:
+        task: The considered task.
+
+    Returns:
+        A Dataset object.
+    """
+
+    if task not in dataset_dict:
+        raise ValueError("Invalid dataset type")
+    else:
+        return dataset_dict[task](patchs, labels, n_bands, fs, transform)
 
 
 def get_model(module_name: str, n_channel: int):
