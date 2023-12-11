@@ -6,4 +6,45 @@ entry_points:
       remote_server_uri: {type: str, default: https://mlflow.lab.sspcloud.fr}
       experiment_name: {type: str, default: segmentation}
       run_name: {type: str, default: default}
-    command: "python ./src/train.py {remote_server_uri} {experiment_name} {run_name}"
+      task: {type: str, default: segmentation}
+      source: {type: str, default: PLEIADES}
+      dep: {type: str, default: MAYOTTE}
+      year: {type: str, default: 2022}
+      tiles_size: {type: str, default: 250}
+      type_labeler: {type: str, default: BDTOPO}
+      n_bands: {type: str, default: 3}
+      earlystop: {type: str, default: default}
+      checkpoints: {type: str, default: default}
+      max_epochs: {type: int, default: 2}
+      num_sanity_val_steps: {type: int, default: 2}
+      accumulate_batch: {type: int, default: 2}
+      module_name: {type: str, default: deeplabv3}
+      loss_name: {type: str, default: crossentropy}
+      lr: {type: float, default: 0.0001}
+      momentum: {type: float, default: 0.9}
+      scheduler_patience: {type: int, default: default}
+      from_s3: {type: bool, default: False}
+
+    command: |
+          python src/train.py \
+            {remote_server_uri} \
+            {experiment_name} \
+            {run_name} \
+            {task} \
+            {source} \
+            {dep} \
+            {year} \
+            {tiles_size} \
+            {type_labeler} \
+            {n_bands} \
+            {earlystop} \
+            {checkpoints} \
+            {max_epochs} \
+            {num_sanity_val_steps} \
+            {accumulate_batch} \
+            {module_name} \
+            {loss_name} \
+            {lr} \
+            {momentum} \
+            {scheduler_patience} \
+            {from_s3}
