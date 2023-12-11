@@ -2,11 +2,13 @@
 Main script.
 """
 
+import gc
 import sys
 from typing import Dict, List
 
 import albumentations as A
 import mlflow
+import torch
 from albumentations.pytorch.transforms import ToTensorV2
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
@@ -56,12 +58,15 @@ def main(
         mlflow.autolog()
         fs = get_file_system()
 
+        # 1- Get patch paths from s3
         patchs = fs.ls(
             (
                 f"projet-slums-detection/data-preprocessed/patchs/"
                 f"{task}/{source}/{dep}/{year}/{tiles_size}"
             )
         )
+
+        # 2- Get label paths from s3
         labels = fs.ls(
             (
                 f"projet-slums-detection/data-preprocessed/labels/"
@@ -69,12 +74,13 @@ def main(
             )
         )
 
+        # 3- Define the transforms to apply
         transform = A.Compose(
             [
                 A.RandomResizedCrop(*(tiles_size,) * 2, scale=(0.7, 1.0), ratio=(0.7, 1)),
                 A.HorizontalFlip(),
                 A.VerticalFlip(),
-                # Calculer moyenne et variance sur toutes
+                # TODO: Calculer moyenne et variance sur toutes les images
                 A.Normalize(
                     max_pixel_value=255.0, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
                 ),
@@ -82,24 +88,24 @@ def main(
             ]
         )
 
-        # mettre en Params comme Tom a fait dans formation-mlops
+        # 4- Retrieve the Dataset object given the params
+        # TODO: mettre en Params comme Tom a fait dans formation-mlops
         dataset = get_dataset(task, patchs, labels, n_bands, fs, transform)
 
-        # Use random_split to split the dataset
+        # 5- Use random_split to split the dataset
         generator = Generator().manual_seed(2023)
-        train_dataset, val_dataset, test_dataset = random_split(
-            dataset, [0.7, 0.2, 0.1], generator=generator
-        )
+        train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=generator)
 
-        # Create data loaders
+        # 6- Create data loaders
         train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
         val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+
+        # 7- Create the trainer and the lightning
         trainer = get_trainer(
             earlystop, checkpoints, max_epochs, num_sanity_val_steps, accumulate_batch
         )
 
-        lightning_module = get_lightning_module(
+        light_module = get_lightning_module(
             module_name,
             loss_name,
             n_channel,
@@ -110,19 +116,22 @@ def main(
             scheduler_patience,
         )
 
-        return train_loader, test_loader, val_loader, trainer, lightning_module
+        # 8- Training the model on the training set
+        torch.cuda.empty_cache()
+        gc.collect()
 
-    # 1- Download data ? Est ce qu'on peut donner des path s3 au dataloader ?
-    # 2- Prepare data (filtrer certaines images sans maison ? balancing)
-    # 3- Split data train/test/valid => instancie dataloader
-    # 4- On instancie le trainer
-    # 5- On instancie le lightning_module
-    # 6- On entraine le modele
-    # 7- On evalue le modele
-    # 8- On auto log sur MLflow
+        trainer.fit(light_module, train_loader, val_loader)
+
+        # 9- Inference on the validation set
+        # light_module.eval()
+        # with torch.no_grad():
+        #     for inputs, targets in val_loader:
+        #         outputs = light_module(inputs)
+
+        return trainer
 
 
-# Rajouter dans MLflow un fichier texte avc tous les nom des mages used pour le training
+# Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training
 # Dans le prepro check si habitation ou non et mettre dans le nom du fichier
 
 
@@ -131,4 +140,22 @@ if __name__ == "__main__":
         str(sys.argv[1]),
         str(sys.argv[2]),
         str(sys.argv[3]),
+        str(sys.argv[4]),
+        str(sys.argv[5]),
+        str(sys.argv[6]),
+        str(sys.argv[7]),
+        str(sys.argv[8]),
+        str(sys.argv[9]),
+        str(sys.argv[10]),
+        str(sys.argv[11]),
+        str(sys.argv[12]),
+        str(sys.argv[13]),
+        str(sys.argv[14]),
+        str(sys.argv[15]),
+        str(sys.argv[16]),
+        str(sys.argv[17]),
+        str(sys.argv[18]),
+        str(sys.argv[19]),
+        str(sys.argv[20]),
+        str(sys.argv[21]),
     )
