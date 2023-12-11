@@ -23,6 +23,20 @@ n_bands = 3
 type_labeler = "BDTOPO"
 task = "segmentation"
 tiles_size = 250
+experiment_name = "default"
+earlystop = {"monitor": "validation_accuracy", "patience": 35, "mode": "max"}
+checkpoints = [
+    {"monitor": "validation_accuracy", "save_top_k": 1, "save_last": True, "mode": "max"}
+]
+max_epochs = 2
+num_sanity_val_steps = 2
+accumulate_batch = 8
+module_name = "deeplabv3"
+loss_name = "crossentropy"
+n_channel = 3
+lr = 0.0001
+momentum = 0.9
+scheduler_patience = 10
 
 
 def main(
