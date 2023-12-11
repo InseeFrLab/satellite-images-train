@@ -11,8 +11,8 @@ from albumentations.pytorch.transforms import ToTensorV2
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
-from data.components.dataset import SegmentationDataset
-from functions import download_data, trainers
+from functions.download_data import get_file_system
+from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 
 source = "PLEIADES"
 dep = "GUADELOUPE"
@@ -39,6 +39,12 @@ def main(
     max_epochs: int,
     num_sanity_val_steps: int,
     accumulate_batch: int,
+    module_name: str,
+    loss_name: str,
+    n_channel: int,
+    lr: float,
+    momentum: float,
+    scheduler_patience: int,
 ):
     """
     Main method.
@@ -48,7 +54,7 @@ def main(
     mlflow.set_experiment(experiment_name)
     with mlflow.start_run(run_name=run_name):
         mlflow.autolog()
-        fs = download_data.get_file_system()
+        fs = get_file_system()
 
         patchs = fs.ls(
             (
@@ -76,7 +82,8 @@ def main(
             ]
         )
 
-        dataset = SegmentationDataset(patchs, labels, n_bands, fs, transform)
+        # mettre en Params comme Tom a fait dans formation-mlops
+        dataset = get_dataset(task, patchs, labels, n_bands, fs, transform)
 
         # Use random_split to split the dataset
         generator = Generator().manual_seed(2023)
@@ -88,11 +95,22 @@ def main(
         train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
         val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
-        trainer = trainers.get_trainer(
+        trainer = get_trainer(
             earlystop, checkpoints, max_epochs, num_sanity_val_steps, accumulate_batch
         )
 
-        return train_loader, test_loader, val_loader, trainer
+        lightning_module = get_lightning_module(
+            module_name,
+            loss_name,
+            n_channel,
+            task,
+            lr,
+            momentum,
+            earlystop,
+            scheduler_patience,
+        )
+
+        return train_loader, test_loader, val_loader, trainer, lightning_module
 
     # 1- Download data ? Est ce qu'on peut donner des path s3 au dataloader ?
     # 2- Prepare data (filtrer certaines images sans maison ? balancing)
