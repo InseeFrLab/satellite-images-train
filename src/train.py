@@ -182,5 +182,5 @@ if __name__ == "__main__":
         float(sys.argv[18]),
         float(sys.argv[19]),
         int(sys.argv[20]),
-        bool(sys.argv[21]),
+        bool(int(sys.argv[21])),
     )

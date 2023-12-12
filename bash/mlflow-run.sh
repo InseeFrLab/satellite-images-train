@@ -33,4 +33,4 @@ mlflow run ~/work/satellite-images-train/ \
 -P lr=0.0001 \
 -P momentum=0.9 \
 -P scheduler_patience=10 \
--P from_s3=False
+-P from_s3=0
