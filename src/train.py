@@ -45,7 +45,7 @@ def main(
     source: str,
     dep: str,
     year: str,
-    tiles_size: str,
+    tiles_size: int,
     type_labeler: str,
     n_bands: str,
     earlystop: Dict,
@@ -100,8 +100,8 @@ def main(
         train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=generator)
 
         # 5- Create data loaders
-        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+        val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False)
 
         # 6- Create the trainer and the lightning
         trainer = get_trainer(
@@ -169,7 +169,7 @@ if __name__ == "__main__":
         str(sys.argv[5]),
         str(sys.argv[6]),
         str(sys.argv[7]),
-        str(sys.argv[8]),
+        int(sys.argv[8]),
         str(sys.argv[9]),
         str(sys.argv[10]),
         str(sys.argv[11]),
