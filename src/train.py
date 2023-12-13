@@ -10,11 +10,14 @@ import albumentations as A
 import mlflow
 import torch
 from albumentations.pytorch.transforms import ToTensorV2
+from osgeo import gdal
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
 from functions.download_data import get_patchs_labels
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
+
+gdal.UseExceptions()
 
 # source = "PLEIADES"
 # dep = "GUADELOUPE"
