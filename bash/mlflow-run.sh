@@ -11,18 +11,33 @@ export MLFLOW_EXPERIMENT_NAME="segmentation"
 # Set ENTRY_POINT
 export ENTRY_POINT="segmentation"
 
+TASK=segmentation
+SOURCE=PLEIADES
+DEP=MAYOTTE
+YEAR=2022
+TILES_SIZE=250
+TYPE_LABELER=BDTOPO
+USE_S3=1
+
+
+if [ "$USE_S3" -eq 0 ]; then
+    # Copy data locally
+    mc cp -r s3/projet-slums-detection/data-preprocessed/patchs/$TASK/$SOURCE/$DEP/$YEAR/$TILES_SIZE data/data-preprocessed/patchs/$TASK/$SOURCE/$DEP/$YEAR/
+    mc cp -r s3/projet-slums-detection/data-preprocessed/labels/$TYPE_LABELER/$TASK/$SOURCE/$DEP/$YEAR/$TILES_SIZE data/data-preprocessed/labels/$TYPE_LABELER/$TASK/$SOURCE/$DEP/$YEAR/
+fi
+
 mlflow run ~/work/satellite-images-train/ \
 --env-manager=local \
 --entry-point $ENTRY_POINT \
 -P remote_server_uri=$MLFLOW_TRACKING_URI \
 -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
--P source="PLEIADES" \
--P dep="MAYOTTE" \
--P year="2022" \
+-P source=$SOURCE \
+-P dep=$DEP \
+-P year=$YEAR \
 -P n_bands=3 \
--P type_labeler="BDTOPO" \
--P task="segmentation" \
--P tiles_size=250 \
+-P type_labeler=$TYPE_LABELER \
+-P task=$TASK \
+-P tiles_size=$TILES_SIZE \
 -P earlystop="temp" \
 -P checkpoints="temp" \
 -P max_epochs=2 \
@@ -33,7 +48,4 @@ mlflow run ~/work/satellite-images-train/ \
 -P lr=0.0001 \
 -P momentum=0.9 \
 -P scheduler_patience=10 \
--P from_s3=0
-
-# mc cp -r s3/projet-slums-detection/data-preprocessed/patchs/segmentation/PLEIADES/MAYOTTE/2022/250 data/data-preprocessed/patchs/segmentation/PLEIADES/MAYOTTE/2022/
-# mc cp -r s3/projet-slums-detection/data-preprocessed/labels/BDTOPO/segmentation/PLEIADES/MAYOTTE/2022/250 data/data-preprocessed/labels/BDTOPO/segmentation/PLEIADES/MAYOTTE/2022/
+-P from_s3=$USE_S3
