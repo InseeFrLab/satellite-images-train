@@ -103,7 +103,8 @@ spec:
                   -P tiles_size={{inputs.parameters.TILES_SIZE}} \
                   -P epochs={{inputs.parameters.EPOCHS}} \
                   -P lr={{inputs.parameters.LR}} \
-                  -P from_s3={{inputs.parameters.USE_S3}}"
+                  -P from_s3={{inputs.parameters.USE_S3}} \
+                  -P cuda=1"
               ]
         env:
           # env var for s3 connexion

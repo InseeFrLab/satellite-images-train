@@ -244,6 +244,7 @@ def main(
 
         # 7- Training the model on the training set
         torch.cuda.empty_cache()
+        torch.set_float32_matmul_precision("medium")
         gc.collect()
 
         trainer.fit(light_module, train_loader, val_loader)

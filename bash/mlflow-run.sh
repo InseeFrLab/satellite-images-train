@@ -13,6 +13,7 @@ TYPE_LABELER=BDTOPO
 USE_S3=0
 EPOCHS=2
 LR=0.0001
+CUDA=1
 
 mlflow run ~/work/satellite-images-train/ \
     --env-manager=local \
@@ -27,4 +28,5 @@ mlflow run ~/work/satellite-images-train/ \
     -P tiles_size=$TILES_SIZE \
     -P epochs=$EPOCHS \
     -P lr=$LR \
-    -P from_s3=$USE_S3
+    -P from_s3=$USE_S3 \
+    -P cuda=$CUDA
