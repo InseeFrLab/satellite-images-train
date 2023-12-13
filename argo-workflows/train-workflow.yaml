@@ -15,9 +15,40 @@ spec:
               "TASK": "segmentation",
               "TILES_SIZE": 250,
               "USE_S3": 0,
-              "EPOCHS": 10,
+              "EPOCHS": 50,
+              "LR": 0.0001
+            },
+            { "SOURCE": "PLEIADES",
+              "DEP": "GUADELOUPE",
+              "YEAR": 2022,
+              "TYPE_LABELER": "BDTOPO",
+              "TASK": "segmentation",
+              "TILES_SIZE": 250,
+              "USE_S3": 0,
+              "EPOCHS": 50,
+              "LR": 0.0001
+            },
+            { "SOURCE": "PLEIADES",
+              "DEP": "MARTINIQUE",
+              "YEAR": 2022,
+              "TYPE_LABELER": "BDTOPO",
+              "TASK": "segmentation",
+              "TILES_SIZE": 250,
+              "USE_S3": 0,
+              "EPOCHS": 50,
+              "LR": 0.0001
+            },
+            { "SOURCE": "PLEIADES",
+              "DEP": "REUNION",
+              "YEAR": 2022,
+              "TYPE_LABELER": "BDTOPO",
+              "TASK": "segmentation",
+              "TILES_SIZE": 250,
+              "USE_S3": 0,
+              "EPOCHS": 50,
               "LR": 0.0001
             }
+
             ]'
 
   templates:

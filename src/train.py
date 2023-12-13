@@ -191,8 +191,10 @@ def main(
 
     kwargs = {"num_workers": 5, "pin_memory": True} if args.cuda else {}
 
-    earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
-    checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]
+    earlystop = {"monitor": "validation_loss", "patience": 35, "mode": "min"}
+    checkpoints = [
+        {"monitor": "validation_loss", "save_top_k": 1, "save_last": False, "mode": "min"}
+    ]
 
     # Get patchs and labels
     patchs, labels = get_patchs_labels(from_s3, task, source, dep, year, tiles_size, type_labeler)
@@ -219,7 +221,7 @@ def main(
     train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
 
     # 5- Create data loaders
-    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, **kwargs)
+    train_loader = DataLoader(train_dataset, batch_size=7, shuffle=True, **kwargs)
     val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, **kwargs)
 
     # 6- Create the trainer and the lightning

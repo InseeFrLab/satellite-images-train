@@ -15,7 +15,7 @@ entry_points:
       n_bands: {type: str, default: 3}
       epochs: {type: int, default: 2}
       num_sanity_val_steps: {type: int, default: 2}
-      accumulate_batch: {type: int, default: 8}
+      accumulate_batch: {type: int, default: 4}
       module_name: {type: str, default: deeplabv3}
       loss_name: {type: str, default: crossentropy}
       lr: {type: float, default: 0.01}
