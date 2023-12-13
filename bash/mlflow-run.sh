@@ -34,3 +34,6 @@ mlflow run ~/work/satellite-images-train/ \
 -P momentum=0.9 \
 -P scheduler_patience=10 \
 -P from_s3=0
+
+# mc cp -r s3/projet-slums-detection/data-preprocessed/patchs/segmentation/PLEIADES/MAYOTTE/2022/250 data/data-preprocessed/patchs/segmentation/PLEIADES/MAYOTTE/2022/
+# mc cp -r s3/projet-slums-detection/data-preprocessed/labels/BDTOPO/segmentation/PLEIADES/MAYOTTE/2022/250 data/data-preprocessed/labels/BDTOPO/segmentation/PLEIADES/MAYOTTE/2022/
