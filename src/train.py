@@ -138,7 +138,7 @@ parser.add_argument(
     help="Number of epochs with no improvement after which learning rate will be reduced",
 )
 parser.add_argument(
-    "--from-s3",
+    "--from_s3",
     type=int,
     choices=[0, 1],
     default=0,
@@ -189,7 +189,7 @@ def main(
     if args.cuda:
         torch.cuda.manual_seed(args.seed)
 
-    kwargs = {"num_workers": 1, "pin_memory": True} if args.cuda else {}
+    kwargs = {"num_workers": 5, "pin_memory": True} if args.cuda else {}
 
     earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
     checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]

@@ -1,10 +1,10 @@
 name: satellite
 
 entry_points:
-  segmentation:
+  main:
     parameters:
-      remote_server_uri: {type: str, default: https://mlflow.lab.sspcloud.fr}
-      experiment_name: {type: str, default: segmentation}
+      remote_server_uri: {type: str, default: https://projet-slums-detection-***.user.lab.sspcloud.fr}
+      experiment_name: {type: str, default: test}
       run_name: {type: str, default: default}
       task: {type: str, default: segmentation}
       source: {type: str, default: PLEIADES}
@@ -13,38 +13,36 @@ entry_points:
       tiles_size: {type: str, default: 250}
       type_labeler: {type: str, default: BDTOPO}
       n_bands: {type: str, default: 3}
-      earlystop: {type: str, default: default}
-      checkpoints: {type: str, default: default}
-      max_epochs: {type: int, default: 2}
+      epochs: {type: int, default: 2}
       num_sanity_val_steps: {type: int, default: 2}
-      accumulate_batch: {type: int, default: 2}
+      accumulate_batch: {type: int, default: 8}
       module_name: {type: str, default: deeplabv3}
       loss_name: {type: str, default: crossentropy}
-      lr: {type: float, default: 0.0001}
+      lr: {type: float, default: 0.01}
       momentum: {type: float, default: 0.9}
-      scheduler_patience: {type: int, default: default}
-      from_s3: {type: bool, default: False}
+      scheduler_patience: {type: int, default: 10}
+      cuda: {type: int, default: 0}
+      from_s3: {type: int, default: 0}
 
     command: |
           python src/train.py \
-            {remote_server_uri} \
-            {experiment_name} \
-            {run_name} \
-            {task} \
-            {source} \
-            {dep} \
-            {year} \
-            {tiles_size} \
-            {type_labeler} \
-            {n_bands} \
-            {earlystop} \
-            {checkpoints} \
-            {max_epochs} \
-            {num_sanity_val_steps} \
-            {accumulate_batch} \
-            {module_name} \
-            {loss_name} \
-            {lr} \
-            {momentum} \
-            {scheduler_patience} \
-            {from_s3}
+            --remote_server_uri {remote_server_uri} \
+            --experiment_name {experiment_name} \
+            --run_name {run_name} \
+            --task {task} \
+            --source {source} \
+            --dep {dep} \
+            --year {year} \
+            --tiles_size {tiles_size} \
+            --type_labeler {type_labeler} \
+            --n_bands {n_bands} \
+            --epochs {epochs} \
+            --num_sanity_val_steps {num_sanity_val_steps} \
+            --accumulate_batch {accumulate_batch} \
+            --module_name {module_name} \
+            --loss_name {loss_name} \
+            --lr {lr} \
+            --momentum {momentum} \
+            --scheduler_patience {scheduler_patience} \
+            --cuda {cuda} \
+            --from_s3 {from_s3}
