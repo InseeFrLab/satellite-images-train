@@ -7,8 +7,8 @@ unset AWS_SESSION_TOKEN
 export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT
 export MLFLOW_S3_ENDPOINT_URL='https://minio.lab.sspcloud.fr'
 
-sudo apt-get update
-sudo apt-get install python3-gdal -y
-sudo apt-get install libgdal-dev -y
+mamba install -c conda-forge gdal -y
+export PROJ_LIB=/opt/mamba/share/proj
+
 pip install -r requirements.txt
 pre-commit install
