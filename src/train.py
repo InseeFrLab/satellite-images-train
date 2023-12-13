@@ -100,8 +100,8 @@ def main(
         train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=generator)
 
         # 5- Create data loaders
-        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=5)
+        val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, num_workers=5)
 
         # 6- Create the trainer and the lightning
         trainer = get_trainer(
