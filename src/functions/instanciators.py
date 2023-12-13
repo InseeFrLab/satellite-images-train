@@ -124,6 +124,7 @@ def get_lightning_module(
     momentum: float,
     earlystop: Dict,
     scheduler_patience: int,
+    cuda: int,
 ):
     """
     Create a PyTorch Lightning module for segmentation
@@ -144,6 +145,8 @@ def get_lightning_module(
         LightningModule = task_dict[task]
 
     model = get_model(module_name, n_bands)
+    if cuda:
+        model.cuda()
     loss = get_loss(loss_name)
 
     # TODO: faire get_optimizer with kwargs

@@ -2,9 +2,8 @@
 Main script.
 """
 
+import argparse
 import gc
-import sys
-from typing import Dict, List
 
 import albumentations as A
 import mlflow
@@ -19,25 +18,144 @@ from functions.instanciators import get_dataset, get_lightning_module, get_train
 
 gdal.UseExceptions()
 
-# source = "PLEIADES"
-# dep = "GUADELOUPE"
-# year = "2020"
-# n_bands = 3
-# type_labeler = "BDTOPO"
-# task = "segmentation"
-# tiles_size = 250
-# experiment_name = "default"
-# earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
-# checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]
-# max_epochs = 2
-# num_sanity_val_steps = 2
-# accumulate_batch = 8
-# module_name = "deeplabv3"
-# loss_name = "crossentropy"
-# lr = 0.0001
-# momentum = 0.9
-# scheduler_patience = 10
-# from_s3 = False
+# Command-line arguments
+parser = argparse.ArgumentParser(description="PyTorch Training Satellite Images")
+parser.add_argument(
+    "--remote_server_uri",
+    type=str,
+    default="https://projet-slums-detection-***.user.lab.sspcloud.fr",
+    help="MLflow URI",
+    required=True,
+)
+parser.add_argument(
+    "--experiment_name",
+    type=str,
+    choices=["segmentation", "detection", "classification", "test"],
+    default="test",
+    help="Experiment name in MLflow",
+)
+parser.add_argument(
+    "--run_name",
+    type=str,
+    default="default",
+    help="Run name in MLflow",
+)
+parser.add_argument(
+    "--task",
+    type=str,
+    choices=["segmentation", "detection", "classification"],
+    default="segmentation",
+    help="Task of the training",
+    required=True,
+)
+parser.add_argument(
+    "--source",
+    type=str,
+    choices=["PLEIADES", "SENTINEL2"],
+    default="PLEIADES",
+    help="Source of the data used for the training",
+    required=True,
+)
+parser.add_argument(
+    "--dep",
+    type=str,
+    choices=["CAYENNE", "GUADELOUPE", "MARTINIQUE", "MAYOTTE", "REUNION"],
+    default="MAYOTTE",
+    help="Departement used for the training",
+    required=True,
+)
+parser.add_argument(
+    "--year",
+    type=int,
+    choices=[2017, 2018, 2019, 2020, 2021, 2022],
+    metavar="N",
+    default=2022,
+    help="Year used for the training",
+    required=True,
+)
+parser.add_argument(
+    "--tiles_size",
+    type=int,
+    choices=[250, 125],
+    metavar="N",
+    default=250,
+    help="Size of tiles used for the training",
+    required=True,
+)
+parser.add_argument(
+    "--type_labeler",
+    type=str,
+    choices=["BDTOPO"],
+    default="BDTOPO",
+    help="Source of data used for labelling",
+)
+parser.add_argument(
+    "--n_bands",
+    type=int,
+    default=3,
+    metavar="N",
+    help="Number of bands used for the training",
+)
+parser.add_argument(
+    "--epochs", type=int, default=10, metavar="N", help="Number of epochs to train (default: 10)"
+)
+parser.add_argument(
+    "--lr", type=float, default=0.01, metavar="LR", help="Learning rate (default: 0.01)"
+)
+parser.add_argument(
+    "--momentum", type=float, default=0.5, metavar="M", help="SGD momentum (default: 0.5)"
+)
+parser.add_argument(
+    "--module_name",
+    type=str,
+    choices=["deeplabv3"],
+    default="deeplabv3",
+    help="Model used as based model",
+)
+parser.add_argument(
+    "--loss_name",
+    type=str,
+    choices=["crossentropy", "bce"],
+    default="crossentropy",
+    help="Loss used during the training process",
+)
+parser.add_argument(
+    "--num_sanity_val_steps",
+    type=int,
+    default=2,
+    help="Number of batches of val runned before starting the training routine",
+)
+parser.add_argument(
+    "--accumulate_batch",
+    type=int,
+    default=8,
+    help="Number of batches used for accumlate gradient",
+)
+parser.add_argument(
+    "--scheduler_patience",
+    type=int,
+    default=10,
+    help="Number of epochs with no improvement after which learning rate will be reduced",
+)
+parser.add_argument(
+    "--from-s3",
+    type=int,
+    choices=[0, 1],
+    default=0,
+    help="Read images directly from s3",
+)
+parser.add_argument(
+    "--cuda",
+    type=int,
+    choices=[0, 1],
+    default=0,
+    help="Enables or disables CUDA training",
+)
+parser.add_argument("--seed", type=int, default=1, metavar="S", help="random seed (default: 1)")
+
+args = parser.parse_args()
+
+args.cuda = args.cuda and torch.cuda.is_available()
 
 
 def main(
@@ -51,9 +169,7 @@ def main(
     tiles_size: int,
     type_labeler: str,
     n_bands: str,
-    earlystop: Dict,
-    checkpoints: List[Dict],
-    max_epochs: int,
+    epochs: int,
     num_sanity_val_steps: int,
     accumulate_batch: int,
     module_name: str,
@@ -61,11 +177,19 @@ def main(
     lr: float,
     momentum: float,
     scheduler_patience: int,
-    from_s3: bool,
+    from_s3: int,
+    seed: int,
+    cuda: int,
 ):
     """
     Main method.
     """
+
+    torch.manual_seed(args.seed)
+    if args.cuda:
+        torch.cuda.manual_seed(args.seed)
+
+    kwargs = {"num_workers": 1, "pin_memory": True} if args.cuda else {}
 
     earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
     checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]
@@ -99,16 +223,15 @@ def main(
         dataset = get_dataset(task, patchs, labels, n_bands, from_s3, transform)
 
         # 4- Use random_split to split the dataset
-        generator = Generator().manual_seed(2023)
-        train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=generator)
+        train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
 
         # 5- Create data loaders
-        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=5)
-        val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, num_workers=5)
+        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, **kwargs)
+        val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, **kwargs)
 
         # 6- Create the trainer and the lightning
         trainer = get_trainer(
-            earlystop, checkpoints, max_epochs, num_sanity_val_steps, accumulate_batch
+            earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch
         )
 
         light_module = get_lightning_module(
@@ -120,6 +243,7 @@ def main(
             momentum,
             earlystop,
             scheduler_patience,
+            cuda,
         )
 
         # 7- Training the model on the training set
@@ -140,50 +264,5 @@ def main(
 # Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training
 # Dans le prepro check si habitation ou non et mettre dans le nom du fichier
 
-
 if __name__ == "__main__":
-    print(sys.argv[1])
-    print(sys.argv[2])
-    print(sys.argv[3])
-    print(sys.argv[4])
-    print(sys.argv[5])
-    print(sys.argv[6])
-    print(sys.argv[7])
-    print(sys.argv[8])
-    print(sys.argv[9])
-    print(sys.argv[10])
-    print(sys.argv[11])
-    print(sys.argv[12])
-    print(sys.argv[13])
-    print(sys.argv[14])
-    print(sys.argv[15])
-    print(sys.argv[16])
-    print(sys.argv[17])
-    print(sys.argv[18])
-    print(sys.argv[19])
-    print(sys.argv[20])
-    print(sys.argv[21])
-
-    main(
-        str(sys.argv[1]),
-        str(sys.argv[2]),
-        str(sys.argv[3]),
-        str(sys.argv[4]),
-        str(sys.argv[5]),
-        str(sys.argv[6]),
-        str(sys.argv[7]),
-        int(sys.argv[8]),
-        str(sys.argv[9]),
-        str(sys.argv[10]),
-        str(sys.argv[11]),
-        str(sys.argv[12]),
-        int(sys.argv[13]),
-        int(sys.argv[14]),
-        int(sys.argv[15]),
-        str(sys.argv[16]),
-        str(sys.argv[17]),
-        float(sys.argv[18]),
-        float(sys.argv[19]),
-        int(sys.argv[20]),
-        bool(int(sys.argv[21])),
-    )
+    main(**vars(args))
