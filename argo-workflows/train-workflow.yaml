@@ -1,0 +1,133 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: parallel-training-
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: training-conf-list
+        value: '[
+            { "SOURCE": "PLEIADES",
+              "DEP": "MAYOTTE",
+              "YEAR": 2022,
+              "TYPE_LABELER": "BDTOPO",
+              "TASK": "segmentation",
+              "TILES_SIZE": 250,
+              "USE_S3": 0,
+              "EPOCHS": 10,
+              "LR": 0.0001,
+            },
+            ]'
+
+  templates:
+    # Entrypoint DAG template
+    - name: main
+      dag:
+        tasks:
+          # Task 0: Start pipeline
+          - name: start-pipeline
+            template: start-pipeline-wt
+          # Task 1: Preprocess images
+          - name: run-training-with-params
+            dependencies: [ start-pipeline ]
+            template: run-training-wt
+            arguments:
+              parameters:
+                - name: SOURCE
+                  value: "{{item.SOURCE}}"
+                - name: DEP
+                  value: "{{item.DEP}}"
+                - name: YEAR
+                  value: "{{item.YEAR}}"
+                - name: TYPE_LABELER
+                  value: "{{item.TYPE_LABELER}}"
+                - name: TASK
+                  value: "{{item.TASK}}"
+                - name: TILES_SIZE
+                  value: "{{item.TILES_SIZE}}"
+                - name: USE_S3
+                  value: "{{item.USE_S3}}"
+                - name: EPOCHS
+                  value: "{{item.EPOCHS}}"
+                - name: LR
+                  value: "{{item.LR}}"
+
+            # Pass the inputs to the task using "withParam"
+            withParam: "{{workflow.parameters.training-conf-list}}"
+
+    # Now task container templates are defined
+    # Worker template for task 0 : start-pipeline
+    - name: start-pipeline-wt
+      inputs:
+      container:
+        image: busybox
+        command: [ sh, -c ]
+        args: [ "echo Starting pipeline" ]
+
+    # Worker template for task-1 : train model with params
+    - name: run-training-wt
+      inputs:
+        parameters:
+          - name: SOURCE
+          - name: DEP
+          - name: YEAR
+          - name: TYPE_LABELER
+          - name: TASK
+          - name: TILES_SIZE
+          - name: USE_S3
+          - name: EPOCHS
+          - name: LR
+      nodeSelector:
+        nvidia.com/gpu.product: "NVIDIA-H100-PCIe"
+      container:
+        image: inseefrlab/satellite-images-train:v0.0.1
+        imagePullPolicy: Always
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        persistence:
+          size: 20Gi
+        command: ["/bin/bash", -c]
+        args: ["git clone https://github.com/InseeFrLab/satellite-images-train.git &&
+              cd satellite-images-train/ &&
+              export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT &&
+              mlflow run ~/work/satellite-images-train/ \
+                  --env-manager=local \
+                  --entry-point $ENTRY_POINT \
+                  -P remote_server_uri=$MLFLOW_TRACKING_URI \
+                  -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
+                  -P source={{inputs.parameters.SOURCE}}$ \
+                  -P dep={{inputs.parameters.DEP}} \
+                  -P year={{inputs.parameters.YEAR}} \
+                  -P type_labeler={{inputs.parameters.TYPE_LABELER}} \
+                  -P task={{inputs.parameters.TASK}} \
+                  -P tiles_size={{inputs.parameters.TILES_SIZE}} \
+                  -P epochs={{inputs.parameters.EPOCHS}} \
+                  -P lr={{inputs.parameters.LR}} \
+                  -P from_s3={{inputs.parameters.USE_S3}}"
+              ]
+        env:
+          # env var for s3 connexion
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: my-s3-creds
+                key: accessKey
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-s3-creds
+                key: secretKey
+          - name: AWS_DEFAULT_REGION
+            value: us-east-1
+          - name: AWS_S3_ENDPOINT
+            value: minio.lab.sspcloud.fr
+          - name: MLFLOW_S3_ENDPOINT_URL
+            value: https://minio.lab.sspcloud.fr
+          - name: MLFLOW_TRACKING_URI
+            value: https://projet-slums-detection-128833.user.lab.sspcloud.fr
+          - name: MLFLOW_EXPERIMENT_NAME
+            value: segmentation
+          - name: ENTRY_POINT
+            value: main
