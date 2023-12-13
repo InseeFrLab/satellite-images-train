@@ -24,7 +24,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: inseefrlab/satellite-images-preprocess
+          images: inseefrlab/satellite-images-train
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
