@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from s3fs import S3FileSystem
 
@@ -80,23 +81,23 @@ def download_data(
     if all_exist:
         return None
 
-    try:
-        # Initialize S3 file system
-        fs = get_file_system()
+    patch_cmd = [
+        "mc",
+        "cp",
+        "-r",
+        f"s3/projet-slums-detection/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}",  # noqa
+        f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/",
+    ]
 
-        print("\n*** Téléchargement des données...\n")
-        # Download data from S3 to local path
-        for path_local, path_s3 in zip(
-            [patchs_path, labels_path],
-            [x.replace("data/", "projet-slums-detection/") for x in [patchs_path, labels_path]],
-        ):
-            if not os.path.exists(path_local):
-                fs.download(rpath=path_s3, lpath=path_local, recursive=True)
+    label_cmd = [
+        "mc",
+        "cp",
+        "-r",
+        f"s3/projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}",  # noqa
+        f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/",
+    ]
 
-    except FileNotFoundError:
-        print(f"Error: The specified data path '{path_s3}' does not exist on the S3 bucket.")
-        raise
-
-    except Exception as e:
-        print(f"Error: An unexpected error occurred during the download process. {e}")
-        raise
+    # download patchs
+    subprocess.run(patch_cmd, check=True)
+    # download labels
+    subprocess.run(label_cmd, check=True)

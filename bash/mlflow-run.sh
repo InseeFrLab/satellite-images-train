@@ -16,12 +16,6 @@ USE_S3=0
 EPOCHS=2
 LR=0.0001
 
-if [ "$USE_S3" -eq 0 ]; then
-    # Copy data locally
-    mc cp -r s3/projet-slums-detection/data-preprocessed/patchs/$TASK/$SOURCE/$DEP/$YEAR/$TILES_SIZE data/data-preprocessed/patchs/$TASK/$SOURCE/$DEP/$YEAR/
-    mc cp -r s3/projet-slums-detection/data-preprocessed/labels/$TYPE_LABELER/$TASK/$SOURCE/$DEP/$YEAR/$TILES_SIZE data/data-preprocessed/labels/$TYPE_LABELER/$TASK/$SOURCE/$DEP/$YEAR/
-fi
-
 mlflow run ~/work/satellite-images-train/ \
     --env-manager=local \
     --entry-point $ENTRY_POINT \
