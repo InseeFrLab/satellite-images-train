@@ -194,57 +194,53 @@ def main(
     earlystop = {"monitor": "validation_IOU", "patience": 35, "mode": "max"}
     checkpoints = [{"monitor": "validation_IOU", "save_top_k": 1, "save_last": True, "mode": "max"}]
 
+    # Get patchs and labels
+    patchs, labels = get_patchs_labels(from_s3, task, source, dep, year, tiles_size, type_labeler)
+
+    # 2- Define the transforms to apply
+    transform = A.Compose(
+        [
+            A.RandomResizedCrop(*(tiles_size,) * 2, scale=(0.7, 1.0), ratio=(0.7, 1)),
+            A.HorizontalFlip(),
+            A.VerticalFlip(),
+            # TODO: Calculer moyenne et variance sur toutes les images
+            A.Normalize(
+                max_pixel_value=255.0, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
+            ),
+            ToTensorV2(),
+        ]
+    )
+
+    # 3- Retrieve the Dataset object given the params
+    # TODO: mettre en Params comme Tom a fait dans formation-mlops
+    dataset = get_dataset(task, patchs, labels, n_bands, from_s3, transform)
+
+    # 4- Use random_split to split the dataset
+    train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
+
+    # 5- Create data loaders
+    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, **kwargs)
+    val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, **kwargs)
+
+    # 6- Create the trainer and the lightning
+    trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)
+
+    light_module = get_lightning_module(
+        module_name,
+        loss_name,
+        n_bands,
+        task,
+        lr,
+        momentum,
+        earlystop,
+        scheduler_patience,
+        cuda,
+    )
+
     mlflow.set_tracking_uri(remote_server_uri)
     mlflow.set_experiment(experiment_name)
     with mlflow.start_run(run_name=run_name):
         mlflow.autolog()
-
-        # Get patchs and labels
-        patchs, labels = get_patchs_labels(
-            from_s3, task, source, dep, year, tiles_size, type_labeler
-        )
-
-        # 2- Define the transforms to apply
-        transform = A.Compose(
-            [
-                A.RandomResizedCrop(*(tiles_size,) * 2, scale=(0.7, 1.0), ratio=(0.7, 1)),
-                A.HorizontalFlip(),
-                A.VerticalFlip(),
-                # TODO: Calculer moyenne et variance sur toutes les images
-                A.Normalize(
-                    max_pixel_value=255.0, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
-                ),
-                ToTensorV2(),
-            ]
-        )
-
-        # 3- Retrieve the Dataset object given the params
-        # TODO: mettre en Params comme Tom a fait dans formation-mlops
-        dataset = get_dataset(task, patchs, labels, n_bands, from_s3, transform)
-
-        # 4- Use random_split to split the dataset
-        train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
-
-        # 5- Create data loaders
-        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, **kwargs)
-        val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, **kwargs)
-
-        # 6- Create the trainer and the lightning
-        trainer = get_trainer(
-            earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch
-        )
-
-        light_module = get_lightning_module(
-            module_name,
-            loss_name,
-            n_bands,
-            task,
-            lr,
-            momentum,
-            earlystop,
-            scheduler_patience,
-            cuda,
-        )
 
         # 7- Training the model on the training set
         torch.cuda.empty_cache()
@@ -257,8 +253,6 @@ def main(
         # with torch.no_grad():
         #     for inputs, targets in val_loader:
         #         outputs = light_module(inputs)
-
-        return trainer
 
 
 # Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training
