@@ -16,39 +16,10 @@ spec:
               "TILES_SIZE": 250,
               "USE_S3": 0,
               "EPOCHS": 50,
-              "LR": 0.0001
-            },
-            { "SOURCE": "PLEIADES",
-              "DEP": "GUADELOUPE",
-              "YEAR": 2022,
-              "TYPE_LABELER": "BDTOPO",
-              "TASK": "segmentation",
-              "TILES_SIZE": 250,
-              "USE_S3": 0,
-              "EPOCHS": 50,
-              "LR": 0.0001
-            },
-            { "SOURCE": "PLEIADES",
-              "DEP": "MARTINIQUE",
-              "YEAR": 2022,
-              "TYPE_LABELER": "BDTOPO",
-              "TASK": "segmentation",
-              "TILES_SIZE": 250,
-              "USE_S3": 0,
-              "EPOCHS": 50,
-              "LR": 0.0001
-            },
-            { "SOURCE": "PLEIADES",
-              "DEP": "REUNION",
-              "YEAR": 2022,
-              "TYPE_LABELER": "BDTOPO",
-              "TASK": "segmentation",
-              "TILES_SIZE": 250,
-              "USE_S3": 0,
-              "EPOCHS": 50,
+              "BATCH_SIZE": 32,
+              "TEST_BATCH_SIZE": 32,
               "LR": 0.0001
             }
-
             ]'
 
   templates:
@@ -81,6 +52,10 @@ spec:
                   value: "{{item.USE_S3}}"
                 - name: EPOCHS
                   value: "{{item.EPOCHS}}"
+                - name: BATCH_SIZE
+                  value: "{{item.BATCH_SIZE}}"
+                - name: TEST_BATCH_SIZE
+                  value: "{{item.TEST_BATCH_SIZE}}"
                 - name: LR
                   value: "{{item.LR}}"
 
@@ -108,11 +83,13 @@ spec:
           - name: TILES_SIZE
           - name: USE_S3
           - name: EPOCHS
+          - name: BATCH_SIZE
+          - name: TEST_BATCH_SIZE
           - name: LR
       nodeSelector:
         nvidia.com/gpu.product: "NVIDIA-H100-PCIe"
       container:
-        image: inseefrlab/satellite-images-train:v0.0.1
+        image: inseefrlab/satellite-images-train:v0.0.5
         imagePullPolicy: Always
         resources:
           limits:
@@ -133,6 +110,8 @@ spec:
                   -P task={{inputs.parameters.TASK}} \
                   -P tiles_size={{inputs.parameters.TILES_SIZE}} \
                   -P epochs={{inputs.parameters.EPOCHS}} \
+                  -P batch_size={{inputs.parameters.BATCH_SIZE}} \
+                  -P test_batch_size={{inputs.parameters.TEST_BATCH_SIZE}} \
                   -P lr={{inputs.parameters.LR}} \
                   -P from_s3={{inputs.parameters.USE_S3}} \
                   -P cuda=1"

@@ -1,9 +1,9 @@
 """
 Main script.
 """
-
 import argparse
 import gc
+import os
 
 import albumentations as A
 import mlflow
@@ -97,6 +97,20 @@ parser.add_argument(
     help="Number of bands used for the training",
 )
 parser.add_argument(
+    "--batch_size",
+    type=int,
+    default=32,
+    metavar="N",
+    help="input batch size for training (default: 32)",
+)
+parser.add_argument(
+    "--test_batch_size",
+    type=int,
+    default=32,
+    metavar="N",
+    help="input batch size for testing (default: 32)",
+)
+parser.add_argument(
     "--epochs", type=int, default=10, metavar="N", help="Number of epochs to train (default: 10)"
 )
 parser.add_argument(
@@ -170,6 +184,8 @@ def main(
     type_labeler: str,
     n_bands: str,
     epochs: int,
+    batch_size: int,
+    test_batch_size: int,
     num_sanity_val_steps: int,
     accumulate_batch: int,
     module_name: str,
@@ -189,7 +205,7 @@ def main(
     if args.cuda:
         torch.cuda.manual_seed(args.seed)
 
-    kwargs = {"num_workers": 5, "pin_memory": True} if args.cuda else {}
+    kwargs = {"num_workers": os.cpu_count(), "pin_memory": True} if args.cuda else {}
 
     earlystop = {"monitor": "validation_loss", "patience": 35, "mode": "min"}
     checkpoints = [
@@ -221,8 +237,8 @@ def main(
     train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
 
     # 5- Create data loaders
-    train_loader = DataLoader(train_dataset, batch_size=7, shuffle=True, **kwargs)
-    val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, **kwargs)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **kwargs)
+    val_loader = DataLoader(val_dataset, batch_size=test_batch_size, shuffle=False, **kwargs)
 
     # 6- Create the trainer and the lightning
     trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)

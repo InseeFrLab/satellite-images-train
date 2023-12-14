@@ -13,6 +13,8 @@ TILES_SIZE=250
 TYPE_LABELER=BDTOPO
 USE_S3=0
 EPOCHS=2
+BATCH_SIZE=5
+TEST_BATCH_SIZE=5
 LR=0.0001
 CUDA=1
 
@@ -28,6 +30,8 @@ mlflow run ~/work/satellite-images-train/ \
     -P task=$TASK \
     -P tiles_size=$TILES_SIZE \
     -P epochs=$EPOCHS \
+    -P batch_size=$BATCH_SIZE \
+    -P test_batch_size=$TEST_BATCH_SIZE \
     -P lr=$LR \
     -P from_s3=$USE_S3 \
     -P cuda=$CUDA
