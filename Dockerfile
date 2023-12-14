@@ -1,4 +1,4 @@
-FROM inseefrlab/onyxia-vscode-pytorch:py3.10.13
+FROM inseefrlab/onyxia-vscode-pytorch:py3.10.13-gpu
 
 ENV PROJ_LIB=/opt/mamba/share/proj
 
