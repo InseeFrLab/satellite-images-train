@@ -1,7 +1,8 @@
 #! /bin/bash
 
-MLFLOW_TRACKING_URI="https://projet-slums-detection-128833.user.lab.sspcloud.fr"
-MLFLOW_EXPERIMENT_NAME="segmentation"
+export MLFLOW_TRACKING_URI=https://projet-slums-detection-128833.user.lab.sspcloud.fr
+export MLFLOW_S3_ENDPOINT_URL=https://minio.lab.sspcloud.fr
+export MLFLOW_EXPERIMENT_NAME=segmentation
 ENTRY_POINT=main
 
 TASK=segmentation
