@@ -3,6 +3,7 @@ import subprocess
 from typing import List, Tuple
 
 from s3fs import S3FileSystem
+import yaml
 
 
 def get_file_system() -> S3FileSystem:
@@ -146,3 +147,22 @@ def download_data(
     subprocess.run(patch_cmd, check=True)
     # download labels
     subprocess.run(label_cmd, check=True)
+
+
+def normalization_params(
+    task: str, source: str, dep: str, year: str, tiles_size: str, type_labeler: str
+):
+    """
+    Get normalization params from s3.
+
+    task (str): Task.
+    source (str): Satellite source.
+    dep (str): Department.
+    year (str): Year.
+    tiles_size (str): Tiles size.
+    type_labeler (str): Type of labeler.
+    """
+    params_path = f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/train/metrics-normalization.yaml"  # noqa
+    with open(params_path) as f:
+        params = yaml.safe_load(f)
+    return params["mean"], params["std"]
