@@ -1,6 +1,7 @@
 """
 Main script.
 """
+
 import argparse
 import gc
 import os
@@ -111,13 +112,21 @@ parser.add_argument(
     help="input batch size for testing (default: 32)",
 )
 parser.add_argument(
-    "--epochs", type=int, default=10, metavar="N", help="Number of epochs to train (default: 10)"
+    "--epochs",
+    type=int,
+    default=10,
+    metavar="N",
+    help="Number of epochs to train (default: 10)",
 )
 parser.add_argument(
     "--lr", type=float, default=0.01, metavar="LR", help="Learning rate (default: 0.01)"
 )
 parser.add_argument(
-    "--momentum", type=float, default=0.5, metavar="M", help="SGD momentum (default: 0.5)"
+    "--momentum",
+    type=float,
+    default=0.5,
+    metavar="M",
+    help="SGD momentum (default: 0.5)",
 )
 parser.add_argument(
     "--module_name",
@@ -209,13 +218,22 @@ def main(
 
     earlystop = {"monitor": "validation_loss", "patience": 35, "mode": "min"}
     checkpoints = [
-        {"monitor": "validation_loss", "save_top_k": 1, "save_last": False, "mode": "min"}
+        {
+            "monitor": "validation_loss",
+            "save_top_k": 1,
+            "save_last": False,
+            "mode": "min",
+        }
     ]
 
     # Get patchs and labels for training
-    patchs, labels = get_patchs_labels(from_s3, task, source, dep, year, tiles_size, type_labeler, train=True)
+    patchs, labels = get_patchs_labels(
+        from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
+    )
     # Get patches and labels for test
-    test_patches, test_labels = get_patchs_labels(from_s3, task, source, dep, year, tiles_size, type_labeler, train=False)
+    test_patches, test_labels = get_patchs_labels(
+        from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
+    )
 
     # 2- Define the transforms to apply
     transform = A.Compose(
@@ -225,7 +243,9 @@ def main(
             A.VerticalFlip(),
             # TODO: Calculer moyenne et variance sur toutes les images
             A.Normalize(
-                max_pixel_value=255.0, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
+                max_pixel_value=255.0,
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
             ),
             ToTensorV2(),
         ]
@@ -235,7 +255,9 @@ def main(
         [
             # TODO: Calculer moyenne et variance sur toutes les images
             A.Normalize(
-                max_pixel_value=255.0, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
+                max_pixel_value=255.0,
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
             ),
             ToTensorV2(),
         ]

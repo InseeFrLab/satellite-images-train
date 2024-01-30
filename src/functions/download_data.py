@@ -65,13 +65,25 @@ def get_patchs_labels(
         )
 
     else:
-        patchs_path = f"data/data-preprocessed/patchs/" f"{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
+        patchs_path = (
+            f"data/data-preprocessed/patchs/" f"{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
+        )
         labels_path = (
             f"data/data-preprocessed/labels/"
             f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
         )
 
-        download_data(patchs_path, labels_path, task, source, dep, year, tiles_size, type_labeler, train)
+        download_data(
+            patchs_path,
+            labels_path,
+            task,
+            source,
+            dep,
+            year,
+            tiles_size,
+            type_labeler,
+            train,
+        )
 
         patchs = [f"{patchs_path}/{filename}" for filename in os.listdir(patchs_path)]
         labels = [f"{labels_path}/{filename}" for filename in os.listdir(labels_path)]
