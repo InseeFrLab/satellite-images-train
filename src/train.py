@@ -1,6 +1,7 @@
 """
 Main script.
 """
+
 import argparse
 import gc
 import os
@@ -111,13 +112,21 @@ parser.add_argument(
     help="input batch size for testing (default: 32)",
 )
 parser.add_argument(
-    "--epochs", type=int, default=10, metavar="N", help="Number of epochs to train (default: 10)"
+    "--epochs",
+    type=int,
+    default=10,
+    metavar="N",
+    help="Number of epochs to train (default: 10)",
 )
 parser.add_argument(
     "--lr", type=float, default=0.01, metavar="LR", help="Learning rate (default: 0.01)"
 )
 parser.add_argument(
-    "--momentum", type=float, default=0.5, metavar="M", help="SGD momentum (default: 0.5)"
+    "--momentum",
+    type=float,
+    default=0.5,
+    metavar="M",
+    help="SGD momentum (default: 0.5)",
 )
 parser.add_argument(
     "--module_name",
@@ -209,11 +218,22 @@ def main(
 
     earlystop = {"monitor": "validation_loss", "patience": 35, "mode": "min"}
     checkpoints = [
-        {"monitor": "validation_loss", "save_top_k": 1, "save_last": False, "mode": "min"}
+        {
+            "monitor": "validation_loss",
+            "save_top_k": 1,
+            "save_last": False,
+            "mode": "min",
+        }
     ]
 
-    # Get patchs and labels
-    patchs, labels = get_patchs_labels(from_s3, task, source, dep, year, tiles_size, type_labeler)
+    # Get patchs and labels for training
+    patchs, labels = get_patchs_labels(
+        from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
+    )
+    # Get patches and labels for test
+    test_patches, test_labels = get_patchs_labels(
+        from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
+    )
 
     # 2- Define the transforms to apply
     transform = A.Compose(
@@ -223,7 +243,21 @@ def main(
             A.VerticalFlip(),
             # TODO: Calculer moyenne et variance sur toutes les images
             A.Normalize(
-                max_pixel_value=255.0, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
+                max_pixel_value=255.0,
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
+            ),
+            ToTensorV2(),
+        ]
+    )
+    # Test transform
+    test_transform = A.Compose(
+        [
+            # TODO: Calculer moyenne et variance sur toutes les images
+            A.Normalize(
+                max_pixel_value=255.0,
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
             ),
             ToTensorV2(),
         ]
@@ -232,6 +266,7 @@ def main(
     # 3- Retrieve the Dataset object given the params
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
     dataset = get_dataset(task, patchs, labels, n_bands, from_s3, transform)
+    test_dataset = get_dataset(task, test_patches, test_labels, n_bands, from_s3, test_transform)
 
     # 4- Use random_split to split the dataset
     train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
@@ -239,6 +274,7 @@ def main(
     # 5- Create data loaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **kwargs)
     val_loader = DataLoader(val_dataset, batch_size=test_batch_size, shuffle=False, **kwargs)
+    test_loader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, **kwargs)
 
     # 6- Create the trainer and the lightning
     trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)
@@ -267,11 +303,8 @@ def main(
 
         trainer.fit(light_module, train_loader, val_loader)
 
-        # 8- Inference on the validation set
-        # light_module.eval()
-        # with torch.no_grad():
-        #     for inputs, targets in val_loader:
-        #         outputs = light_module(inputs)
+        # 8- Test
+        trainer.test(dataloaders=test_loader)
 
 
 # Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training
