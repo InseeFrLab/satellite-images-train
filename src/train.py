@@ -14,7 +14,7 @@ from osgeo import gdal
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
-from functions.download_data import get_patchs_labels
+from functions.download_data import get_patchs_labels, normalization_params
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 
 gdal.UseExceptions()
@@ -236,6 +236,13 @@ def main(
     )
 
     # 2- Define the transforms to apply
+    normalization_mean, normalization_std = normalization_params(
+        task, source, dep, year, tiles_size, type_labeler
+    )
+    normalization_mean, normalization_std = (
+        normalization_mean[:n_bands],
+        normalization_std[:n_bands],
+    )
     transform = A.Compose(
         [
             A.RandomResizedCrop(*(tiles_size,) * 2, scale=(0.7, 1.0), ratio=(0.7, 1)),
@@ -244,8 +251,8 @@ def main(
             # TODO: Calculer moyenne et variance sur toutes les images
             A.Normalize(
                 max_pixel_value=255.0,
-                mean=(0.485, 0.456, 0.406),
-                std=(0.229, 0.224, 0.225),
+                mean=normalization_mean,
+                std=normalization_std,
             ),
             ToTensorV2(),
         ]
@@ -256,8 +263,8 @@ def main(
             # TODO: Calculer moyenne et variance sur toutes les images
             A.Normalize(
                 max_pixel_value=255.0,
-                mean=(0.485, 0.456, 0.406),
-                std=(0.229, 0.224, 0.225),
+                mean=normalization_mean,
+                std=normalization_std,
             ),
             ToTensorV2(),
         ]
