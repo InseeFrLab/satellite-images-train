@@ -1,5 +1,6 @@
 import os
 import subprocess
+from typing import List, Tuple
 
 from s3fs import S3FileSystem
 
@@ -23,32 +24,54 @@ def get_patchs_labels(
     year: str,
     tiles_size: str,
     type_labeler: str,
-):
+    train: bool,
+) -> Tuple[List[str], List[str]]:
+    """
+    Get paths to patches and labels from s3 or local.
+
+    Args:
+        from_s3 (bool): True if data should be downloaded from s3, False otherwise.
+        task (str): Task.
+        source (str): Satellite source.
+        dep (str): Department.
+        year (str): Year.
+        tiles_size (str): Tiles size.
+        type_labeler (str): Type of labeler.
+        train (bool): True if data should be downloaded for training, False otherwise.
+
+    Returns:
+        Tuple[List[str], List[str]]: Paths to patchs and labels.
+    """
+    if train:
+        stage = "train"
+    else:
+        stage = "test"
+
     if from_s3:
         fs = get_file_system()
 
         patchs = fs.ls(
             (
                 f"projet-slums-detection/data-preprocessed/patchs/"
-                f"{task}/{source}/{dep}/{year}/{tiles_size}"
+                f"{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
             )
         )
 
         labels = fs.ls(
             (
                 f"projet-slums-detection/data-preprocessed/labels/"
-                f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}"
+                f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
             )
         )
 
     else:
-        patchs_path = f"data/data-preprocessed/patchs/" f"{task}/{source}/{dep}/{year}/{tiles_size}"
+        patchs_path = f"data/data-preprocessed/patchs/" f"{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
         labels_path = (
             f"data/data-preprocessed/labels/"
-            f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}"
+            f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
         )
 
-        download_data(patchs_path, labels_path, task, source, dep, year, tiles_size, type_labeler)
+        download_data(patchs_path, labels_path, task, source, dep, year, tiles_size, type_labeler, train)
 
         patchs = [f"{patchs_path}/{filename}" for filename in os.listdir(patchs_path)]
         labels = [f"{labels_path}/{filename}" for filename in os.listdir(labels_path)]
@@ -65,16 +88,26 @@ def download_data(
     year: str,
     tiles_size: str,
     type_labeler: str,
-):
+    train: bool,
+) -> None:
     """
-    Download data from a specified source, department, and year.
+    Download data for a specific context, if not already downloaded.
 
-    Parameters:
-    - source (str): The data source identifier.
-    - dep (str): The department identifier.
-    - year (str): The year for which data should be downloaded.
-
+    Args:
+        patchs_path (str): Paths to patchs.
+        labels_path (str): Paths to labels.
+        task (str): Task.
+        source (str): Satellite source.
+        dep (str): Department.
+        year (str): Year.
+        tiles_size (str): Tiles size.
+        type_labeler (str): Type of labeler.
+        train (bool): True if data should be downloaded for training, False otherwise.
     """
+    if train:
+        stage = "train"
+    else:
+        stage = "test"
 
     all_exist = all(os.path.exists(f"{directory}") for directory in [patchs_path, labels_path])
 
@@ -85,16 +118,16 @@ def download_data(
         "mc",
         "cp",
         "-r",
-        f"s3/projet-slums-detection/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}",  # noqa
-        f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/",
+        f"s3/projet-slums-detection/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}",  # noqa
+        f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{stage}/",
     ]
 
     label_cmd = [
         "mc",
         "cp",
         "-r",
-        f"s3/projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}",  # noqa
-        f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/",
+        f"s3/projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}",  # noqa
+        f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{stage}/",
     ]
 
     # download patchs
