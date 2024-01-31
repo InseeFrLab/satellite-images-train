@@ -1,6 +1,7 @@
 import os
 import subprocess
 from typing import List, Tuple
+from pathlib import Path
 
 from s3fs import S3FileSystem
 import yaml
@@ -54,7 +55,7 @@ def get_patchs_labels(
         patchs = fs.ls(
             (
                 f"projet-slums-detection/data-preprocessed/patchs/"
-                f"{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
+                f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
             )
         )
 
@@ -86,7 +87,11 @@ def get_patchs_labels(
             train,
         )
 
-        patchs = [f"{patchs_path}/{filename}" for filename in os.listdir(patchs_path)]
+        patchs = [
+            f"{patchs_path}/{filename}"
+            for filename in os.listdir(patchs_path)
+            if Path(filename).suffix != ".yaml"
+        ]
         labels = [f"{labels_path}/{filename}" for filename in os.listdir(labels_path)]
 
     return patchs, labels
@@ -131,16 +136,16 @@ def download_data(
         "mc",
         "cp",
         "-r",
-        f"s3/projet-slums-detection/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}",  # noqa
-        f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{stage}/",
+        f"s3/projet-slums-detection/data-preprocessed/patchs/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",  # noqa
+        f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",
     ]
 
     label_cmd = [
         "mc",
         "cp",
         "-r",
-        f"s3/projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}",  # noqa
-        f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{stage}/",
+        f"s3/projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",  # noqa
+        f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",
     ]
 
     # download patchs

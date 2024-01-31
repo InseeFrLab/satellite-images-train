@@ -150,8 +150,8 @@ def get_lightning_module(
     loss = get_loss(loss_name)
 
     # TODO: faire get_optimizer with kwargs
-    optimizer = torch.optim.SGD
-    optimizer_params = {"lr": lr, "momentum": momentum}
+    optimizer = torch.optim.Adam
+    optimizer_params = {"lr": lr}
 
     # TODO: faire get_scheduler with kwargs
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau
