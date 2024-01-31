@@ -61,7 +61,8 @@ class SegmentationModule(pl.LightningModule):
             batch_idx (int): batch index.
         Returns: Tensor
         """
-        images, labels, dic = batch
+        images = batch["pixel_values"]
+        labels = batch["labels"]
 
         output = self.forward(images)
         loss = self.loss(output, labels)
@@ -78,7 +79,8 @@ class SegmentationModule(pl.LightningModule):
             batch_idx (int): batch index.
         Returns: Tensor
         """
-        images, labels, dic = batch
+        images = batch["pixel_values"]
+        labels = batch["labels"]
 
         output = self.forward(images)
         loss = self.loss(output, labels)
@@ -97,7 +99,8 @@ class SegmentationModule(pl.LightningModule):
             batch_idx (int): batch index.
         Returns: Tensor
         """
-        images, labels, dic = batch
+        images = batch["pixel_values"]
+        labels = batch["labels"]
         output = self.forward(images)
 
         loss = self.loss(output, labels)

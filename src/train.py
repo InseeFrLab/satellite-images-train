@@ -131,7 +131,15 @@ parser.add_argument(
 parser.add_argument(
     "--module_name",
     type=str,
-    choices=["deeplabv3"],
+    choices=[
+        "deeplabv3",
+        "segformer-b0",
+        "segformer-b1",
+        "segformer-b2",
+        "segformer-b3",
+        "segformer-b4",
+        "segformer-b5",
+    ],
     default="deeplabv3",
     help="Model used as based model",
 )
