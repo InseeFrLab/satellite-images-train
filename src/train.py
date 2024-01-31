@@ -230,10 +230,14 @@ def main(
     patchs, labels = get_patchs_labels(
         from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
     )
+    patchs.sort()
+    labels.sort()
     # Get patches and labels for test
     test_patches, test_labels = get_patchs_labels(
         from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
     )
+    test_patches.sort()
+    test_labels.sort()
 
     # 2- Define the transforms to apply
     normalization_mean, normalization_std = normalization_params(
