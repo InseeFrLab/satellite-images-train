@@ -5,6 +5,8 @@ Main script.
 import argparse
 import gc
 import os
+import numpy as np
+import random
 
 import albumentations as A
 import mlflow
@@ -218,9 +220,12 @@ def main(
     Main method.
     """
 
+    # Seeds
     torch.manual_seed(args.seed)
     if args.cuda:
         torch.cuda.manual_seed(args.seed)
+    random.seed(0)
+    np.random.seed(0)
 
     kwargs = {"num_workers": os.cpu_count(), "pin_memory": True} if args.cuda else {}
 
