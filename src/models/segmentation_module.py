@@ -1,6 +1,6 @@
 """
 """
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 import torch
 import pytorch_lightning as pl
 from torch import nn, optim
@@ -46,14 +46,20 @@ class SegmentationModule(pl.LightningModule):
         self.scheduler_interval = scheduler_interval
         self.metric = evaluate.load("mean_iou")
 
-    def forward(self, batch):
+    def forward(self, batch: torch.Tensor, labels: Optional[torch.Tensor] = None):
         """
         Perform forward-pass.
+
         Args:
-            batch (tensor): Batch of images to perform forward-pass.
-        Returns (Tuple[tensor, tensor]): Table, Column prediction.
+            batch (torch.Tensor): Batch of images to perform forward-pass.
+            labels (Optional[torch.Tensor]): Optional labels.
+        Returns:
+            Model output.
         """
-        return self.model(batch)
+        if labels is None:
+            return self.model(batch)
+        else:
+            return self.model(batch, labels)
 
     @staticmethod
     def upsample_logits(logits: torch.Tensor, labels_shape: torch.Size) -> torch.Tensor:
@@ -109,20 +115,21 @@ class SegmentationModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         """
         Training step.
+
         Args:
-            batch (List[Tensor]): Data for training.
+            batch: Data for training.
             batch_idx (int): batch index.
-        Returns: Tensor
+
+        Returns: Training loss.
         """
         images = batch["pixel_values"]
         labels = batch["labels"]
 
-        output = self.forward(images)
         if isinstance(self.model, SegformerForSemanticSegmentation):
-            logits = output.logits
-            upsampled_logits = self.upsample_logits(logits, labels.shape)
-            loss = self.loss(upsampled_logits, labels)
+            output = self.forward(images, labels)
+            loss = output.loss
         else:
+            output = self.forward(images)
             loss = self.loss(output, labels)
 
         self.log("train_loss", loss, on_epoch=True)
@@ -132,21 +139,23 @@ class SegmentationModule(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         """
         Validation step.
+
         Args:
-            batch (List[Tensor]): Data for training.
+            batch: Data for training.
             batch_idx (int): batch index.
-        Returns: Tensor
+
+        Returns: Validation loss.
         """
         images = batch["pixel_values"]
         labels = batch["labels"]
 
-        output = self.forward(images)
         if isinstance(self.model, SegformerForSemanticSegmentation):
+            output = self.forward(images, labels)
+            loss = output.loss
             logits = output.logits
-            upsampled_logits = self.upsample_logits(logits, labels.shape)
-            loss = self.loss(upsampled_logits, labels)
             iou = self.compute_iou_segformer(logits, labels)
         else:
+            output = self.forward(images)
             loss = self.loss(output, labels)
             iou = IOU(output, labels)
 
@@ -158,21 +167,23 @@ class SegmentationModule(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         """
         Test step.
+
         Args:
-            batch (List[Tensor]): Data for training.
+            batch: Data for training.
             batch_idx (int): batch index.
-        Returns: Tensor
+
+        Returns: IOU on test data.
         """
         images = batch["pixel_values"]
         labels = batch["labels"]
 
-        output = self.forward(images)
         if isinstance(self.model, SegformerForSemanticSegmentation):
+            output = self.forward(images, labels)
+            loss = output.loss
             logits = output.logits
-            upsampled_logits = self.upsample_logits(logits, labels.shape)
-            loss = self.loss(upsampled_logits, labels)
-            iou = self.compute_iou_segformer(output, labels)
+            iou = self.compute_iou_segformer(logits, labels)
         else:
+            output = self.forward(images)
             loss = self.loss(output, labels)
             iou = IOU(output, labels)
 
