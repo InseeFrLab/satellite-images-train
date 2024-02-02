@@ -138,9 +138,21 @@ parser.add_argument(
 parser.add_argument(
     "--loss_name",
     type=str,
-    choices=["crossentropy", "bce"],
+    choices=[
+        "crossentropy",
+        "crossentropy_ignore_0",
+        "crossentropy_weighted",
+        "bce",
+        "bce_logits_weighted",
+    ],
     default="crossentropy",
     help="Loss used during the training process",
+)
+parser.add_argument(
+    "--building_class_weight",
+    type=float,
+    default=1,
+    help="Weight for the building class in the loss function",
 )
 parser.add_argument(
     "--num_sanity_val_steps",
@@ -199,6 +211,7 @@ def main(
     accumulate_batch: int,
     module_name: str,
     loss_name: str,
+    building_class_weight: float,
     lr: float,
     momentum: float,
     scheduler_patience: int,

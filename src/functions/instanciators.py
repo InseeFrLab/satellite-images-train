@@ -96,28 +96,34 @@ def get_model(module_name: str, n_bands: str):
     return module_dict[module_name](n_bands)
 
 
-def get_loss(loss_name: str):
+def get_loss(loss_name: str, building_class_weight: float):
     """
-    intantiates an optimizer object with the parameters
-    specified in the configuration file.
+    Get loss function from loss function dictionary.
 
     Args:
-        model: A PyTorch model object.
-        config: A dictionary object containing the configuration parameters.
+        loss_name (str): Name of the loss function.
+        building_class_weight (float): Weights for positive
+            examples in the loss fn.
 
     Returns:
-        An optimizer object from the `torch.optim` module.
+        Loss function.
     """
 
     if loss_name not in loss_dict:
         raise ValueError("Invalid loss type")
     else:
-        return loss_dict[loss_name]()
+        loss_function = loss_dict[loss_name]["loss_function"]
+        weighted = loss_dict[loss_name]["weighted"]
+        kwargs = loss_dict[loss_name]["kwargs"]
+        if weighted:
+            kwargs["building_class_weight"] = building_class_weight
+        return loss_function(**kwargs)
 
 
 def get_lightning_module(
     module_name: str,
     loss_name: str,
+    building_class_weight: float,
     n_bands: str,
     task: str,
     lr: float,
@@ -131,9 +137,17 @@ def get_lightning_module(
     with the given model and optimization configuration.
 
     Args:
-        config (dict): Dictionary containing the configuration
-        parameters for optimization.
-        model: The PyTorch model to use for segmentation.
+        module_name (str): Module name.
+        loss_name (str): Loss name.
+        building_class_weight (float): Weights for positive
+            examples in the loss fn.
+        n_bands (str): Number of bands.
+        task (str): Task.
+        lr (float): Learning rate.
+        momentum (float): Momentum.
+        earlystop (Dict): Earlystopping dict.
+        scheduler_patience (int): Scheduler patience.
+        cuda (int): Cuda boolean.
 
     Returns:
         A PyTorch Lightning module for segmentation.
@@ -147,7 +161,7 @@ def get_lightning_module(
     model = get_model(module_name, n_bands)
     if cuda:
         model.cuda()
-    loss = get_loss(loss_name)
+    loss = get_loss(loss_name, building_class_weight)
 
     # TODO: faire get_optimizer with kwargs
     optimizer = torch.optim.Adam

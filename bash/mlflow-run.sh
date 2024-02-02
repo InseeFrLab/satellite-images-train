@@ -16,6 +16,8 @@ EPOCHS=2
 BATCH_SIZE=5
 TEST_BATCH_SIZE=5
 LR=0.0001
+BUILDING_CLASS_WEIGHT=1
+LOSS_NAME=crossentropy
 CUDA=1
 
 mlflow run ~/work/satellite-images-train/ \
