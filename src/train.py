@@ -314,6 +314,18 @@ def main(
 
         trainer.fit(light_module, train_loader, val_loader)
 
+        # Logging the model with the associated code
+        mlflow.pytorch.log_model(
+            pytorch_model=light_module,
+            artifact_path="model",
+            code_paths=[
+                "src/models/",
+                "src/optim/",
+                f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/train/metrics-normalization.yaml",
+            ],
+        )
+        # TODO: Add signature for inference
+
         # 8- Test
         trainer.test(dataloaders=test_loader)
 
