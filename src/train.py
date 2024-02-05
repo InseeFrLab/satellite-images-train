@@ -131,7 +131,7 @@ parser.add_argument(
 parser.add_argument(
     "--module_name",
     type=str,
-    choices=["deeplabv3"],
+    choices=["deeplabv3", "single_class_deeplabv3"],
     default="deeplabv3",
     help="Model used as based model",
 )
@@ -139,14 +139,20 @@ parser.add_argument(
     "--loss_name",
     type=str,
     choices=[
-        "crossentropy",
-        "crossentropy_ignore_0",
-        "crossentropy_weighted",
+        "cross_entropy",
+        "cross_entropy_ignore_0",
+        "cross_entropy_weighted",
         "bce",
         "bce_logits_weighted",
     ],
-    default="crossentropy",
+    default="cross_entropy",
     help="Loss used during the training process",
+)
+parser.add_argument(
+    "--label_smoothing",
+    type=float,
+    default=0.0,
+    help="Label smoothing the loss function",
 )
 parser.add_argument(
     "--building_class_weight",
@@ -212,6 +218,7 @@ def main(
     module_name: str,
     loss_name: str,
     building_class_weight: float,
+    label_smoothing: float,
     lr: float,
     momentum: float,
     scheduler_patience: int,
@@ -304,15 +311,17 @@ def main(
     trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)
 
     light_module = get_lightning_module(
-        module_name,
-        loss_name,
-        n_bands,
-        task,
-        lr,
-        momentum,
-        earlystop,
-        scheduler_patience,
-        cuda,
+        module_name=module_name,
+        loss_name=loss_name,
+        building_class_weight=building_class_weight,
+        label_smoothing=label_smoothing,
+        n_bands=n_bands,
+        task=task,
+        lr=lr,
+        momentum=momentum,
+        earlystop=earlystop,
+        scheduler_patience=scheduler_patience,
+        cuda=cuda,
     )
 
     mlflow.set_tracking_uri(remote_server_uri)

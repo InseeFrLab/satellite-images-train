@@ -20,6 +20,8 @@ entry_points:
       accumulate_batch: {type: int, default: 4}
       module_name: {type: str, default: deeplabv3}
       loss_name: {type: str, default: crossentropy}
+      label_smoothing: {type: float, default: 0.0}
+      building_class_weight: {type: float, default: 1.0}
       lr: {type: float, default: 0.01}
       momentum: {type: float, default: 0.9}
       scheduler_patience: {type: int, default: 10}
@@ -49,4 +51,6 @@ entry_points:
             --momentum {momentum} \
             --scheduler_patience {scheduler_patience} \
             --cuda {cuda} \
+            --label_smoothing {label_smoothing} \
+            --building_class_weight {building_class_weight} \
             --from_s3 {from_s3}

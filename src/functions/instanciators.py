@@ -96,7 +96,9 @@ def get_model(module_name: str, n_bands: str):
     return module_dict[module_name](n_bands)
 
 
-def get_loss(loss_name: str, building_class_weight: float):
+def get_loss(
+    loss_name: str, building_class_weight: Optional[float], label_smoothing: Optional[float]
+):
     """
     Get loss function from loss function dictionary.
 
@@ -114,9 +116,12 @@ def get_loss(loss_name: str, building_class_weight: float):
     else:
         loss_function = loss_dict[loss_name]["loss_function"]
         weighted = loss_dict[loss_name]["weighted"]
+        smoothing = loss_dict[loss_name]["smoothing"]
         kwargs = loss_dict[loss_name]["kwargs"]
         if weighted:
             kwargs["building_class_weight"] = building_class_weight
+        if smoothing:
+            kwargs["label_smoothing"] = label_smoothing
         return loss_function(**kwargs)
 
 
@@ -124,6 +129,7 @@ def get_lightning_module(
     module_name: str,
     loss_name: str,
     building_class_weight: float,
+    label_smoothing: float,
     n_bands: str,
     task: str,
     lr: float,
@@ -141,6 +147,7 @@ def get_lightning_module(
         loss_name (str): Loss name.
         building_class_weight (float): Weights for positive
             examples in the loss fn.
+        label_smoothing (float): Label smoothing in the loss fn.
         n_bands (str): Number of bands.
         task (str): Task.
         lr (float): Learning rate.
@@ -161,7 +168,9 @@ def get_lightning_module(
     model = get_model(module_name, n_bands)
     if cuda:
         model.cuda()
-    loss = get_loss(loss_name, building_class_weight)
+    loss = get_loss(
+        loss_name, building_class_weight=building_class_weight, label_smoothing=label_smoothing
+    )
 
     # TODO: faire get_optimizer with kwargs
     optimizer = torch.optim.Adam

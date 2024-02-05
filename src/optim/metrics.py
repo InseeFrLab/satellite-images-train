@@ -13,7 +13,11 @@ def IOU(output, labels):
         label: True segmentation mask.
 
     """
-    preds = torch.argmax(output, axis=1)
+    if output.dim() == 3:
+        # Single class: if > 0.5, prediction is 1
+        preds = (output > 0.5).float()
+    else:
+        preds = torch.argmax(output, axis=1)
 
     numIOU = torch.sum((preds * labels), axis=[1, 2])  # vaut 1 si les 2 = 1
     denomIOU = torch.sum(torch.clamp(preds + labels, max=1), axis=[1, 2])

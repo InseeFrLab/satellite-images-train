@@ -39,13 +39,11 @@ class SegmentationDataset(Dataset):
         self.transform = transform
 
     def __getitem__(self, idx):
-        """_summary_
+        """
+        Getitem method.
 
         Args:
-            idx (_type_): _description_
-
-        Returns:
-            _type_: _description_
+            idx: Index.
         """
         if torch.is_tensor(idx):
             idx = idx.tolist()
