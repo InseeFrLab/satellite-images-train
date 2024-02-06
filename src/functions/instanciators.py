@@ -80,7 +80,7 @@ def get_dataset(
         return dataset_dict[task](patchs, labels, n_bands, fs, transform)
 
 
-def get_model(module_name: str, n_bands: str):
+def get_model(module_name: str, n_bands: str, logits: bool):
     """
     Instantiate a module based on the provided module type.
 
@@ -93,7 +93,7 @@ def get_model(module_name: str, n_bands: str):
     if module_name not in module_dict:
         raise ValueError("Invalid module type")
 
-    return module_dict[module_name](n_bands)
+    return module_dict[module_name](n_bands, logits)
 
 
 def get_loss(
@@ -131,6 +131,7 @@ def get_lightning_module(
     building_class_weight: float,
     label_smoothing: float,
     n_bands: str,
+    logits: bool,
     task: str,
     lr: float,
     momentum: float,
@@ -165,9 +166,11 @@ def get_lightning_module(
     else:
         LightningModule = task_dict[task]
 
-    model = get_model(module_name, n_bands)
+    model = get_model(module_name, n_bands, logits)
     if cuda:
         model.cuda()
+    # TODO: losses only compatible with certain model outputs
+    # depends on the logit parameter
     loss = get_loss(
         loss_name, building_class_weight=building_class_weight, label_smoothing=label_smoothing
     )

@@ -10,12 +10,13 @@ class DeepLabv3Module(nn.Module):
     take into account multiscales effect.
     """
 
-    def __init__(self, n_bands="3"):
+    def __init__(self, n_bands: int = 3, logits: bool = True):
         """
         Module constructor.
 
         Args:
-            n_bands (str): Number of channels of the input image.
+            n_bands (int): Number of channels of the input image.
+            logits (bool): True if logits out, if False probabilities.
         """
         super().__init__()
         self.model = torchvision.models.segmentation.deeplabv3_resnet101(
@@ -23,10 +24,12 @@ class DeepLabv3Module(nn.Module):
         )
         # 1 classe !
         self.model.classifier[4] = nn.Conv2d(256, 2, kernel_size=(1, 1), stride=(1, 1))
+        self.softmax_layer = nn.Softmax(dim=1)
+        self.logits = logits
 
-        if n_bands != "3":
+        if n_bands != 3:
             self.model.backbone["conv1"] = nn.Conv2d(
-                int(n_bands),
+                n_bands,
                 64,
                 kernel_size=(7, 7),
                 stride=(2, 2),
@@ -38,7 +41,11 @@ class DeepLabv3Module(nn.Module):
         """
         Forward method.
         """
-        return self.model(x)["out"]
+        logits = self.model(x)["out"]
+        if self.logits:
+            return logits
+        else:
+            return self.softmax_layer(logits)
 
 
 class SingleClassDeepLabv3Module(nn.Module):
@@ -48,12 +55,13 @@ class SingleClassDeepLabv3Module(nn.Module):
     take into account multiscales effect.
     """
 
-    def __init__(self, n_bands: int = "3"):
+    def __init__(self, n_bands: int = 3, logits: bool = True):
         """
         Module constructor.
 
         Args:
-            n_bands (str): Number of channels of the input image.
+            n_bands (int): Number of channels of the input image.
+            logits (bool): True if logits out, if False probabilities.
         """
         super().__init__()
         self.model = torchvision.models.segmentation.deeplabv3_resnet101(
@@ -61,10 +69,12 @@ class SingleClassDeepLabv3Module(nn.Module):
         )
         # 1 classe !
         self.model.classifier = DeepLabHead(2048, 1)
+        self.sigmoid_layer = nn.Sigmoid()
+        self.logits = logits
 
-        if n_bands != "3":
+        if n_bands != 3:
             self.model.backbone["conv1"] = nn.Conv2d(
-                int(n_bands),
+                n_bands,
                 64,
                 kernel_size=(7, 7),
                 stride=(2, 2),
@@ -76,4 +86,8 @@ class SingleClassDeepLabv3Module(nn.Module):
         """
         Forward method.
         """
-        return self.model(x)["out"].squeeze()
+        logits = self.model(x)["out"].squeeze()
+        if self.logits:
+            return logits
+        else:
+            return self.sigmoid_layer(logits)

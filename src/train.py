@@ -98,6 +98,13 @@ parser.add_argument(
     help="Number of bands used for the training",
 )
 parser.add_argument(
+    "--logits",
+    type=int,
+    choices=[0, 1],
+    default=0,
+    help="Should model outputs be logits or probabilities",
+)
+parser.add_argument(
     "--batch_size",
     type=int,
     default=32,
@@ -210,6 +217,7 @@ def main(
     tiles_size: int,
     type_labeler: str,
     n_bands: str,
+    logits: int,
     epochs: int,
     batch_size: int,
     test_batch_size: int,
@@ -316,6 +324,7 @@ def main(
         building_class_weight=building_class_weight,
         label_smoothing=label_smoothing,
         n_bands=n_bands,
+        logits=bool(logits),
         task=task,
         lr=lr,
         momentum=momentum,

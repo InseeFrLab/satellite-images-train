@@ -25,7 +25,7 @@ class SmoothedBCEWithLogitsLoss(nn.Module):
 
     def forward(self, input, target):
         # TODO: add LongTensor type check
-        target = target.to(torch.float32).to(self.device)
+        target = target.to(torch.float32)
         if self.label_smoothing > 0:
             positive_smoothed_labels = 1.0 - self.label_smoothing
             negative_smoothed_labels = self.label_smoothing
@@ -44,6 +44,7 @@ class WeightedBCEWithLogitsLoss(SmoothedBCEWithLogitsLoss):
 class CustomBCELoss(nn.Module):
     """
     Custom BCELoss with target cast to float.
+    Only works if input is probability !
     """
 
     def __init__(self):

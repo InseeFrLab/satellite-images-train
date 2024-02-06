@@ -17,9 +17,10 @@ BATCH_SIZE=5
 TEST_BATCH_SIZE=5
 LR=0.0001
 BUILDING_CLASS_WEIGHT=2
-LOSS_NAME=bce
-MODULE_NAME=single_class_deeplabv3
+LOSS_NAME=cross_entropy_weighted
+MODULE_NAME=deeplabv3
 LABEL_SMOOTHING=0.0
+LOGITS=1
 CUDA=1
 
 mlflow run ~/work/satellite-images-train/ \
@@ -41,4 +42,5 @@ mlflow run ~/work/satellite-images-train/ \
     -P loss_name=$LOSS_NAME \
     -P module_name=$MODULE_NAME \
     -P label_smoothing=$LABEL_SMOOTHING \
+    -P logits=$LOGITS \
     -P cuda=$CUDA
