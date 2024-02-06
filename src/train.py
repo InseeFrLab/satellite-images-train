@@ -155,6 +155,13 @@ parser.add_argument(
     help="Number of batches used for accumlate gradient",
 )
 parser.add_argument(
+    "--scheduler_name",
+    type=str,
+    choices=["reduce_on_plateau", "one_cycle"],
+    default="reduce_on_plateau",
+    help="Scheduling policy",
+)
+parser.add_argument(
     "--scheduler_patience",
     type=int,
     default=10,
@@ -201,6 +208,7 @@ def main(
     loss_name: str,
     lr: float,
     momentum: float,
+    scheduler_name: str,
     scheduler_patience: int,
     from_s3: int,
     seed: int,
@@ -298,6 +306,7 @@ def main(
         lr,
         momentum,
         earlystop,
+        scheduler_name,
         scheduler_patience,
         cuda,
     )
