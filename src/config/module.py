@@ -1,5 +1,6 @@
 from models.components.segmentation_models import (
     DeepLabv3Module,
+    SingleClassDeepLabv3Module,
     SegformerB0,
     SegformerB1,
     SegformerB2,
@@ -11,6 +12,7 @@ from models.components.segmentation_models import (
 
 module_dict = {
     "deeplabv3": DeepLabv3Module,
+    "single_class_deeplabv3": SingleClassDeepLabv3Module,
     "segformer-b0": SegformerB0,
     "segformer-b1": SegformerB1,
     "segformer-b2": SegformerB2,

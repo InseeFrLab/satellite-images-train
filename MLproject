@@ -13,6 +13,7 @@ entry_points:
       tiles_size: {type: str, default: 250}
       type_labeler: {type: str, default: BDTOPO}
       n_bands: {type: str, default: 3}
+      logits: {type: int, default: 1}
       epochs: {type: int, default: 2}
       batch_size: {type: int, default: 32}
       test_batch_size: {type: int, default: 32}
@@ -20,6 +21,8 @@ entry_points:
       accumulate_batch: {type: int, default: 4}
       module_name: {type: str, default: deeplabv3}
       loss_name: {type: str, default: crossentropy}
+      label_smoothing: {type: float, default: 0.0}
+      building_class_weight: {type: float, default: 1.0}
       lr: {type: float, default: 0.01}
       momentum: {type: float, default: 0.9}
       scheduler_patience: {type: int, default: 10}
@@ -38,6 +41,7 @@ entry_points:
             --tiles_size {tiles_size} \
             --type_labeler {type_labeler} \
             --n_bands {n_bands} \
+            --logits {logits} \
             --epochs {epochs} \
             --batch_size {batch_size} \
             --test_batch_size {test_batch_size} \
@@ -49,4 +53,6 @@ entry_points:
             --momentum {momentum} \
             --scheduler_patience {scheduler_patience} \
             --cuda {cuda} \
+            --label_smoothing {label_smoothing} \
+            --building_class_weight {building_class_weight} \
             --from_s3 {from_s3}

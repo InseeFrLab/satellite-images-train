@@ -80,7 +80,7 @@ def get_dataset(
         return dataset_dict[task](patchs, labels, n_bands, fs, transform)
 
 
-def get_model(module_name: str, n_bands: str):
+def get_model(module_name: str, n_bands: str, logits: bool):
     """
     Instantiate a module based on the provided module type.
 
@@ -93,32 +93,45 @@ def get_model(module_name: str, n_bands: str):
     if module_name not in module_dict:
         raise ValueError("Invalid module type")
 
-    return module_dict[module_name](n_bands)
+    return module_dict[module_name](n_bands, logits)
 
 
-def get_loss(loss_name: str):
+def get_loss(
+    loss_name: str, building_class_weight: Optional[float], label_smoothing: Optional[float]
+):
     """
-    intantiates an optimizer object with the parameters
-    specified in the configuration file.
+    Get loss function from loss function dictionary.
 
     Args:
-        model: A PyTorch model object.
-        config: A dictionary object containing the configuration parameters.
+        loss_name (str): Name of the loss function.
+        building_class_weight (float): Weights for positive
+            examples in the loss fn.
 
     Returns:
-        An optimizer object from the `torch.optim` module.
+        Loss function.
     """
 
     if loss_name not in loss_dict:
         raise ValueError("Invalid loss type")
     else:
-        return loss_dict[loss_name]()
+        loss_function = loss_dict[loss_name]["loss_function"]
+        weighted = loss_dict[loss_name]["weighted"]
+        smoothing = loss_dict[loss_name]["smoothing"]
+        kwargs = loss_dict[loss_name]["kwargs"]
+        if weighted:
+            kwargs["building_class_weight"] = building_class_weight
+        if smoothing:
+            kwargs["label_smoothing"] = label_smoothing
+        return loss_function(**kwargs)
 
 
 def get_lightning_module(
     module_name: str,
     loss_name: str,
+    building_class_weight: float,
+    label_smoothing: float,
     n_bands: str,
+    logits: bool,
     task: str,
     lr: float,
     momentum: float,
@@ -131,9 +144,18 @@ def get_lightning_module(
     with the given model and optimization configuration.
 
     Args:
-        config (dict): Dictionary containing the configuration
-        parameters for optimization.
-        model: The PyTorch model to use for segmentation.
+        module_name (str): Module name.
+        loss_name (str): Loss name.
+        building_class_weight (float): Weights for positive
+            examples in the loss fn.
+        label_smoothing (float): Label smoothing in the loss fn.
+        n_bands (str): Number of bands.
+        task (str): Task.
+        lr (float): Learning rate.
+        momentum (float): Momentum.
+        earlystop (Dict): Earlystopping dict.
+        scheduler_patience (int): Scheduler patience.
+        cuda (int): Cuda boolean.
 
     Returns:
         A PyTorch Lightning module for segmentation.
@@ -144,10 +166,14 @@ def get_lightning_module(
     else:
         LightningModule = task_dict[task]
 
-    model = get_model(module_name, n_bands)
+    model = get_model(module_name, n_bands, logits)
     if cuda:
         model.cuda()
-    loss = get_loss(loss_name)
+    # TODO: losses only compatible with certain model outputs
+    # depends on the logit parameter
+    loss = get_loss(
+        loss_name, building_class_weight=building_class_weight, label_smoothing=label_smoothing
+    )
 
     # TODO: faire get_optimizer with kwargs
     optimizer = torch.optim.Adam

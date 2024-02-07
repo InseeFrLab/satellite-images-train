@@ -14,10 +14,15 @@ TILES_SIZE=250
 TYPE_LABELER=BDTOPO
 USE_S3=0
 EPOCHS=2
-BATCH_SIZE=8
-TEST_BATCH_SIZE=8
-LR=0.001
-CUDA=0
+BATCH_SIZE=5
+TEST_BATCH_SIZE=5
+LR=0.0001
+BUILDING_CLASS_WEIGHT=2
+LOSS_NAME=cross_entropy_weighted
+MODULE_NAME=deeplabv3
+LABEL_SMOOTHING=0.0
+LOGITS=1
+CUDA=1
 MODULE_NAME=segformer-b0
 
 mlflow run ~/work/satellite-images-train/ \
@@ -36,5 +41,9 @@ mlflow run ~/work/satellite-images-train/ \
     -P test_batch_size=$TEST_BATCH_SIZE \
     -P lr=$LR \
     -P from_s3=$USE_S3 \
+    -P loss_name=$LOSS_NAME \
+    -P module_name=$MODULE_NAME \
+    -P label_smoothing=$LABEL_SMOOTHING \
+    -P logits=$LOGITS \
     -P cuda=$CUDA \
     -P module_name=$MODULE_NAME
