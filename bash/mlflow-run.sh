@@ -6,6 +6,7 @@ export MLFLOW_EXPERIMENT_NAME=segmentation
 ENTRY_POINT=main
 
 TASK=segmentation
+
 SOURCE=PLEIADES
 DEP=MAYOTTE
 YEAR=2022
@@ -22,6 +23,7 @@ MODULE_NAME=deeplabv3
 LABEL_SMOOTHING=0.0
 LOGITS=1
 CUDA=1
+MODULE_NAME=segformer-b0
 
 mlflow run ~/work/satellite-images-train/ \
     --env-manager=local \
@@ -43,4 +45,5 @@ mlflow run ~/work/satellite-images-train/ \
     -P module_name=$MODULE_NAME \
     -P label_smoothing=$LABEL_SMOOTHING \
     -P logits=$LOGITS \
-    -P cuda=$CUDA
+    -P cuda=$CUDA \
+    -P module_name=$MODULE_NAME

@@ -5,7 +5,7 @@ paths to the non-transformed images or other necessary
 information
 """
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -38,12 +38,15 @@ class SegmentationDataset(Dataset):
         self.from_s3 = from_s3
         self.transform = transform
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple:
         """
-        Getitem method.
+        Getitem fn.
 
         Args:
-            idx: Index.
+            idx: Index of item.
+
+        Returns:
+            Tuple: Image, label and metadata.
         """
         if torch.is_tensor(idx):
             idx = idx.tolist()
@@ -65,14 +68,18 @@ class SegmentationDataset(Dataset):
 
             label = torch.LongTensor(np.load(self.labels[idx]))
 
+        # Transforms
         sample = self.transform(image=np.transpose(si.array, [1, 2, 0]), label=label)
-
         transformed_image = sample["image"]
         transformed_label = sample["label"]
 
         metadata = {"path_image": self.patchs[idx], "path_label": self.labels[idx]}
-
-        return transformed_image, transformed_label, metadata
+        encoded_inputs = {
+            "pixel_values": transformed_image,
+            "labels": transformed_label,
+            "metadata": metadata,
+        }
+        return encoded_inputs
 
     def __len__(self):
         return len(self.patchs)

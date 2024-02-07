@@ -1,6 +1,7 @@
 import torchvision
 from torch import nn
 from torchvision.models.segmentation.deeplabv3 import DeepLabHead
+from transformers import SegformerForSemanticSegmentation
 
 
 class DeepLabv3Module(nn.Module):
@@ -91,3 +92,87 @@ class SingleClassDeepLabv3Module(nn.Module):
             return logits
         else:
             return self.sigmoid_layer(logits)
+
+
+class SegformerB0(SegformerForSemanticSegmentation):
+    """
+    SegformerB0 model.
+    """
+
+    def __new__(cls, n_bands="3"):
+        return SegformerForSemanticSegmentation.from_pretrained(
+            "nvidia/mit-b0",
+            num_labels=2,
+            id2label={0: "background", 1: "building"},
+            label2id={"background": 0, "building": 1},
+        )
+
+
+class SegformerB1(SegformerForSemanticSegmentation):
+    """
+    SegformerB1 model.
+    """
+
+    def __new__(cls, n_bands="3"):
+        return SegformerForSemanticSegmentation.from_pretrained(
+            "nvidia/mit-b0",
+            num_labels=2,
+            id2label={0: "background", 1: "building"},
+            label2id={"background": 0, "building": 1},
+        )
+
+
+class SegformerB2(SegformerForSemanticSegmentation):
+    """
+    SegformerB2 model.
+    """
+
+    def __new__(cls, n_bands="3"):
+        return SegformerForSemanticSegmentation.from_pretrained(
+            "nvidia/mit-b0",
+            num_labels=2,
+            id2label={0: "background", 1: "building"},
+            label2id={"background": 0, "building": 1},
+        )
+
+
+class SegformerB3(SegformerForSemanticSegmentation):
+    """
+    SegformerB3 model.
+    """
+
+    def __new__(cls, n_bands="3"):
+        return SegformerForSemanticSegmentation.from_pretrained(
+            "nvidia/mit-b0",
+            num_labels=2,
+            id2label={0: "background", 1: "building"},
+            label2id={"background": 0, "building": 1},
+        )
+
+
+class SegformerB4(SegformerForSemanticSegmentation):
+    """
+    SegformerB4 model.
+    """
+
+    def __new__(cls, n_bands="3"):
+        return SegformerForSemanticSegmentation.from_pretrained(
+            "nvidia/mit-b0",
+            num_labels=2,
+            id2label={0: "background", 1: "building"},
+            label2id={"background": 0, "building": 1},
+        )
+
+
+class SegformerB5(SegformerForSemanticSegmentation):
+    """
+    SegformerB5 model.
+    """
+
+    def __new__(cls, n_bands="3"):
+        return SegformerForSemanticSegmentation.from_pretrained(
+            "nvidia/mit-b0",
+            num_labels=2,
+            id2label={0: "background", 1: "building"},
+            label2id={"background": 0, "building": 1},
+        )
