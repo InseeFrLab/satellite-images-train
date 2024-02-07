@@ -5,6 +5,8 @@ Main script.
 import argparse
 import gc
 import os
+import numpy as np
+import random
 
 import albumentations as A
 import mlflow
@@ -131,7 +133,15 @@ parser.add_argument(
 parser.add_argument(
     "--module_name",
     type=str,
-    choices=["deeplabv3"],
+    choices=[
+        "deeplabv3",
+        "segformer-b0",
+        "segformer-b1",
+        "segformer-b2",
+        "segformer-b3",
+        "segformer-b4",
+        "segformer-b5",
+    ],
     default="deeplabv3",
     help="Model used as based model",
 )
@@ -210,9 +220,12 @@ def main(
     Main method.
     """
 
+    # Seeds
     torch.manual_seed(args.seed)
     if args.cuda:
         torch.cuda.manual_seed(args.seed)
+    random.seed(0)
+    np.random.seed(0)
 
     kwargs = {"num_workers": os.cpu_count(), "pin_memory": True} if args.cuda else {}
 
