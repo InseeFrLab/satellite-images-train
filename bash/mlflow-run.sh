@@ -6,6 +6,7 @@ export MLFLOW_EXPERIMENT_NAME=segmentation
 ENTRY_POINT=main
 
 TASK=segmentation
+
 SOURCE=PLEIADES
 DEP=MAYOTTE
 YEAR=2022
@@ -17,6 +18,11 @@ BATCH_SIZE=5
 TEST_BATCH_SIZE=5
 LR=0.0001
 SCHEDULER_NAME=one_cycle
+BUILDING_CLASS_WEIGHT=2
+LOSS_NAME=cross_entropy_weighted
+MODULE_NAME=deeplabv3
+LABEL_SMOOTHING=0.0
+LOGITS=1
 CUDA=1
 
 mlflow run ~/work/satellite-images-train/ \
@@ -36,4 +42,9 @@ mlflow run ~/work/satellite-images-train/ \
     -P lr=$LR \
     -P scheduler_name=$SCHEDULER_NAME \
     -P from_s3=$USE_S3 \
-    -P cuda=$CUDA
+    -P loss_name=$LOSS_NAME \
+    -P module_name=$MODULE_NAME \
+    -P label_smoothing=$LABEL_SMOOTHING \
+    -P logits=$LOGITS \
+    -P cuda=$CUDA \
+    -P module_name=$MODULE_NAME
