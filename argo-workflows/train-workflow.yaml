@@ -161,24 +161,22 @@ spec:
               mlflow run ~/work/satellite-images-train/ \
                   --env-manager=local \
                   --entry-point $ENTRY_POINT \
-                  -P remote_server_uri=$MLFLOW_TRACKING_URI \
-                  -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
-                  -P source=$SOURCE \
-                  -P dep=$DEP \
-                  -P year=$YEAR \
-                  -P type_labeler=$TYPE_LABELER \
-                  -P task=$TASK \
-                  -P tiles_size=$TILES_SIZE \
-                  -P epochs=$EPOCHS \
-                  -P batch_size=$BATCH_SIZE \
-                  -P test_batch_size=$TEST_BATCH_SIZE \
-                  -P lr=$LR \
-                  -P from_s3=$USE_S3 \
-                  -P loss_name=$LOSS_NAME \
-                  -P module_name=$MODULE_NAME \
-                  -P label_smoothing=$LABEL_SMOOTHING \
-                  -P logits=$LOGITS \
-                  -P cuda=$CUDA"
+                  -P source={{inputs.parameters.SOURCE}} \
+                  -P dep={{inputs.parameters.DEP}} \
+                  -P year={{inputs.parameters.YEAR}} \
+                  -P type_labeler={{inputs.parameters.TYPE_LABELER}} \
+                  -P task={{inputs.parameters.TASK}} \
+                  -P tiles_size={{inputs.parameters.TILES_SIZE}} \
+                  -P epochs={{inputs.parameters.EPOCHS}} \
+                  -P batch_size={{inputs.parameters.BATCH_SIZE}} \
+                  -P test_batch_size={{inputs.parameters.TEST_BATCH_SIZE}} \
+                  -P lr={{inputs.parameters.LR}} \
+                  -P from_s3={{inputs.parameters.USE_S3}} \
+                  -P loss_name={{inputs.parameters.LOSS_NAME}} \
+                  -P module_name={{inputs.parameters.MODULE_NAME}} \
+                  -P label_smoothing={{inputs.parameters.LABEL_SMOOTHING}} \
+                  -P logits={{inputs.parameters.LOGITS}} \
+                  -P cuda={{inputs.parameters.CUDA}}"
               ]
         env:
           # env var for s3 connexion
