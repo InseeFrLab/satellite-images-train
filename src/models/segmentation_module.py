@@ -157,7 +157,7 @@ class SegmentationModule(pl.LightningModule):
         else:
             output = self.forward(images)
             loss = self.loss(output, labels)
-            iou = IOU(output, labels)
+            iou = IOU(output, labels, self.model.logits)
 
         self.log("validation_IOU", iou, on_epoch=True)
         self.log("validation_loss", loss, on_epoch=True)
@@ -185,7 +185,7 @@ class SegmentationModule(pl.LightningModule):
         else:
             output = self.forward(images)
             loss = self.loss(output, labels)
-            iou = IOU(output, labels)
+            iou = IOU(output, labels, self.model.logits)
 
         self.log("test_loss", loss, on_epoch=True)
         self.log("test_IOU", iou, on_epoch=True)

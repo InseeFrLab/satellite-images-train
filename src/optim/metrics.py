@@ -1,7 +1,7 @@
 import torch
 
 
-def IOU(output, labels):
+def IOU(output, labels, logits):
     """
     Calculate Intersection Over Union indicator
     for the positive class of a segmentation task
@@ -11,9 +11,12 @@ def IOU(output, labels):
     Args:
         output: Output of the segmentation model.
         label: True segmentation mask.
-
+        logits: Boolean True if logits out.
     """
+    # TODO: if logits out then should a sigmoid should be applied
     if output.dim() == 3:
+        if logits:
+            output = torch.sigmoid(output)
         # Single class: if > 0.5, prediction is 1
         preds = (output > 0.5).float()
     else:
