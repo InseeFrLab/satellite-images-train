@@ -20,7 +20,7 @@ entry_points:
       num_sanity_val_steps: {type: int, default: 2}
       accumulate_batch: {type: int, default: 4}
       module_name: {type: str, default: deeplabv3}
-      loss_name: {type: str, default: crossentropy}
+      loss_name: {type: str, default: cross_entropy}
       label_smoothing: {type: float, default: 0.0}
       building_class_weight: {type: float, default: 1.0}
       lr: {type: float, default: 0.01}
