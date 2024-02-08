@@ -3,6 +3,11 @@ kind: Workflow
 metadata:
   generateName: parallel-training-
 spec:
+  volumes:
+    - name: dshm
+      emptyDir:
+        medium: Memory
+        sizeLimit: 10Gi
   entrypoint: main
   arguments:
     parameters:
@@ -161,6 +166,8 @@ spec:
               mlflow run ~/work/satellite-images-train/ \
                   --env-manager=local \
                   --entry-point $ENTRY_POINT \
+                  -P remote_server_uri=$MLFLOW_TRACKING_URI \
+                  -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
                   -P source={{inputs.parameters.SOURCE}} \
                   -P dep={{inputs.parameters.DEP}} \
                   -P year={{inputs.parameters.YEAR}} \
@@ -178,6 +185,9 @@ spec:
                   -P logits={{inputs.parameters.LOGITS}} \
                   -P cuda={{inputs.parameters.CUDA}}"
               ]
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
         env:
           # env var for s3 connexion
           - name: AWS_ACCESS_KEY_ID
