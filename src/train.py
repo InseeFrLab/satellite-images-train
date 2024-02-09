@@ -62,7 +62,7 @@ parser.add_argument(
 parser.add_argument(
     "--dep",
     type=str,
-    choices=["CAYENNE", "GUADELOUPE", "MARTINIQUE", "MAYOTTE", "REUNION"],
+    choices=["CAYENNE", "GUADELOUPE", "MARTINIQUE", "MAYOTTE", "MAYOTTE_CLEAN", "REUNION"],
     default="MAYOTTE",
     help="Departement used for the training",
     required=True,
