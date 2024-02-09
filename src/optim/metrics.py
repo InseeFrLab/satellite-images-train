@@ -35,7 +35,7 @@ def IOU(output, labels, logits):
     return torch.mean(IOU)
 
 
-def pct_positive(output: torch.Tensor, logits: bool) -> torch.Tensor:
+def positive_rate(output: torch.Tensor, logits: bool) -> torch.Tensor:
     """
     Compute percentage of pixels predicted as 1 in the
     batch prediction `output`.
