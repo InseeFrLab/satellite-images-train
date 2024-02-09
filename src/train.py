@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader, random_split
 
 from functions.download_data import get_patchs_labels, normalization_params
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
+from functions.filter import filter_indices_from_labels
 
 gdal.UseExceptions()
 
@@ -282,6 +283,10 @@ def main(
     )
     patchs.sort()
     labels.sort()
+    # No filtering here
+    indices = filter_indices_from_labels(labels, -1.0, 2.0)
+    patchs = [patchs[idx] for idx in indices]
+    labels = [labels[idx] for idx in indices]
     # Get patches and labels for test
     test_patches, test_labels = get_patchs_labels(
         from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
