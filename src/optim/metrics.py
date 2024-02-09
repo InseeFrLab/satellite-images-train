@@ -13,7 +13,6 @@ def IOU(output, labels, logits):
         label: True segmentation mask.
         logits: Boolean True if logits out.
     """
-    # TODO: if logits out then should a sigmoid should be applied
     if output.dim() == 3:
         if logits:
             output = torch.sigmoid(output)
@@ -34,3 +33,26 @@ def IOU(output, labels, logits):
     # n'a pas d'images sans pixel bâtiment
 
     return torch.mean(IOU)
+
+
+def pct_positive(output: torch.Tensor, logits: bool) -> torch.Tensor:
+    """
+    Compute percentage of pixels predicted as 1 in the
+    batch prediction `output`.
+
+    Args:
+        output (torch.Tensor): Batch prediction.
+        logits (bool): Boolean True if output is logits.
+
+    Returns:
+        torch.Tensor: Percentage of pixels predicted as 1.
+    """
+    if output.dim() == 3:
+        if logits:
+            output = torch.sigmoid(output)
+        # Single class: if > 0.5, prediction is 1
+        preds = (output > 0.5).float()
+    else:
+        preds = torch.argmax(output, axis=1)
+
+    return torch.mean(preds)

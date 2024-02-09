@@ -5,7 +5,7 @@ import torch
 import pytorch_lightning as pl
 from torch import nn, optim
 import evaluate
-from optim.metrics import IOU
+from optim.metrics import IOU, pct_positive
 from transformers import SegformerForSemanticSegmentation
 
 
@@ -128,11 +128,18 @@ class SegmentationModule(pl.LightningModule):
         if isinstance(self.model, SegformerForSemanticSegmentation):
             output = self.forward(images, labels)
             loss = output.loss
+            logits = output.logits
+            pct_building = pct_positive(logits, True)
+            iou = self.compute_iou_segformer(logits, labels)
         else:
             output = self.forward(images)
             loss = self.loss(output, labels)
+            pct_building = pct_positive(output, self.model.logits)
+            iou = IOU(output, labels, self.model.logits)
 
-        self.log("train_loss", loss, on_epoch=True)
+        self.log("train_loss", loss, on_step=True, on_epoch=True)
+        self.log("train_iou", iou, on_step=True, on_epoch=True)
+        self.log("train_pct_building", pct_building, on_step=True, on_epoch=True)
 
         return loss
 
@@ -153,14 +160,18 @@ class SegmentationModule(pl.LightningModule):
             output = self.forward(images, labels)
             loss = output.loss
             logits = output.logits
+            pct_building = pct_positive(logits, True)
             iou = self.compute_iou_segformer(logits, labels)
         else:
             output = self.forward(images)
             loss = self.loss(output, labels)
+            pct_building = pct_positive(output, self.model.logits)
             iou = IOU(output, labels, self.model.logits)
 
-        self.log("validation_IOU", iou, on_epoch=True)
-        self.log("validation_loss", loss, on_epoch=True)
+        # Log on epoch, mean reduction
+        self.log("validation_IOU", iou, on_step=True, on_epoch=True)
+        self.log("validation_loss", loss, on_step=True, on_epoch=True)
+        self.log("validation_pct_building", pct_building, on_step=True, on_epoch=True)
 
         return loss
 
@@ -181,14 +192,17 @@ class SegmentationModule(pl.LightningModule):
             output = self.forward(images, labels)
             loss = output.loss
             logits = output.logits
+            pct_building = pct_positive(logits, True)
             iou = self.compute_iou_segformer(logits, labels)
         else:
             output = self.forward(images)
             loss = self.loss(output, labels)
+            pct_building = pct_positive(output, self.model.logits)
             iou = IOU(output, labels, self.model.logits)
 
         self.log("test_loss", loss, on_epoch=True)
         self.log("test_IOU", iou, on_epoch=True)
+        self.log("test_pct_building", pct_building, on_epoch=True)
 
         return IOU
 
