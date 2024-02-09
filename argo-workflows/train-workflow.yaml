@@ -3,22 +3,69 @@ kind: Workflow
 metadata:
   generateName: parallel-training-
 spec:
+  volumes:
+    - name: dshm
+      emptyDir:
+        medium: Memory
+        sizeLimit: 10Gi
   entrypoint: main
   arguments:
     parameters:
       - name: training-conf-list
         value: '[
-            { "SOURCE": "PLEIADES",
+            { "TASK": "segmentation",
+              "SOURCE": "PLEIADES",
               "DEP": "MAYOTTE",
               "YEAR": 2022,
-              "TYPE_LABELER": "BDTOPO",
-              "TASK": "segmentation",
               "TILES_SIZE": 250,
+              "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
-              "EPOCHS": 50,
-              "BATCH_SIZE": 32,
-              "TEST_BATCH_SIZE": 32,
-              "LR": 0.0001
+              "EPOCHS": 120,
+              "BATCH_SIZE": 8,
+              "TEST_BATCH_SIZE": 8,
+              "LR": 0.001,
+              "BUILDING_CLASS_WEIGHT": 10,
+              "LOSS_NAME": "bce_logits_weighted",
+              "MODULE_NAME": "single_class_deeplabv3",
+              "LABEL_SMOOTHING": 0.0,
+              "LOGITS": 1,
+              "CUDA": 1
+            },
+            { "TASK": "segmentation",
+              "SOURCE": "PLEIADES",
+              "DEP": "MAYOTTE",
+              "YEAR": 2022,
+              "TILES_SIZE": 250,
+              "TYPE_LABELER": "BDTOPO",
+              "USE_S3": 0,
+              "EPOCHS": 120,
+              "BATCH_SIZE": 8,
+              "TEST_BATCH_SIZE": 8,
+              "LR": 0.001,
+              "BUILDING_CLASS_WEIGHT": 15,
+              "LOSS_NAME": "bce_logits_weighted",
+              "MODULE_NAME": "single_class_deeplabv3",
+              "LABEL_SMOOTHING": 0.0,
+              "LOGITS": 1,
+              "CUDA": 1
+            },
+            { "TASK": "segmentation",
+              "SOURCE": "PLEIADES",
+              "DEP": "MAYOTTE",
+              "YEAR": 2022,
+              "TILES_SIZE": 250,
+              "TYPE_LABELER": "BDTOPO",
+              "USE_S3": 0,
+              "EPOCHS": 120,
+              "BATCH_SIZE": 8,
+              "TEST_BATCH_SIZE": 8,
+              "LR": 0.001,
+              "BUILDING_CLASS_WEIGHT": 20,
+              "LOSS_NAME": "bce_logits_weighted",
+              "MODULE_NAME": "single_class_deeplabv3",
+              "LABEL_SMOOTHING": 0.0,
+              "LOGITS": 1,
+              "CUDA": 1
             }
             ]'
 
@@ -58,6 +105,18 @@ spec:
                   value: "{{item.TEST_BATCH_SIZE}}"
                 - name: LR
                   value: "{{item.LR}}"
+                - name: BUILDING_CLASS_WEIGHT
+                  value: "{{item.BUILDING_CLASS_WEIGHT}}"
+                - name: LOSS_NAME
+                  value: "{{item.LOSS_NAME}}"
+                - name: MODULE_NAME
+                  value: "{{item.MODULE_NAME}}"
+                - name: LABEL_SMOOTHING
+                  value: "{{item.LABEL_SMOOTHING}}"
+                - name: LOGITS
+                  value: "{{item.LOGITS}}"
+                - name: CUDA
+                  value: "{{item.CUDA}}"
 
             # Pass the inputs to the task using "withParam"
             withParam: "{{workflow.parameters.training-conf-list}}"
@@ -86,10 +145,16 @@ spec:
           - name: BATCH_SIZE
           - name: TEST_BATCH_SIZE
           - name: LR
+          - name: BUILDING_CLASS_WEIGHT
+          - name: LOSS_NAME
+          - name: MODULE_NAME
+          - name: LABEL_SMOOTHING
+          - name: LOGITS
+          - name: CUDA
       nodeSelector:
         nvidia.com/gpu.product: "NVIDIA-H100-PCIe"
       container:
-        image: inseefrlab/satellite-images-train:v0.0.5
+        image: inseefrlab/satellite-images-train:v0.0.6
         imagePullPolicy: Always
         resources:
           limits:
@@ -114,8 +179,15 @@ spec:
                   -P test_batch_size={{inputs.parameters.TEST_BATCH_SIZE}} \
                   -P lr={{inputs.parameters.LR}} \
                   -P from_s3={{inputs.parameters.USE_S3}} \
-                  -P cuda=1"
+                  -P loss_name={{inputs.parameters.LOSS_NAME}} \
+                  -P module_name={{inputs.parameters.MODULE_NAME}} \
+                  -P label_smoothing={{inputs.parameters.LABEL_SMOOTHING}} \
+                  -P logits={{inputs.parameters.LOGITS}} \
+                  -P cuda={{inputs.parameters.CUDA}}"
               ]
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
         env:
           # env var for s3 connexion
           - name: AWS_ACCESS_KEY_ID

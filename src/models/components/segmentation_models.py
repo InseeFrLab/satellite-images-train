@@ -99,7 +99,7 @@ class SegformerB0(SegformerForSemanticSegmentation):
     SegformerB0 model.
     """
 
-    def __new__(cls, n_bands="3"):
+    def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
             "nvidia/mit-b0",
             num_labels=2,
@@ -113,7 +113,7 @@ class SegformerB1(SegformerForSemanticSegmentation):
     SegformerB1 model.
     """
 
-    def __new__(cls, n_bands="3"):
+    def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
             "nvidia/mit-b0",
             num_labels=2,
@@ -127,7 +127,7 @@ class SegformerB2(SegformerForSemanticSegmentation):
     SegformerB2 model.
     """
 
-    def __new__(cls, n_bands="3"):
+    def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
             "nvidia/mit-b0",
             num_labels=2,
@@ -141,7 +141,7 @@ class SegformerB3(SegformerForSemanticSegmentation):
     SegformerB3 model.
     """
 
-    def __new__(cls, n_bands="3"):
+    def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
             "nvidia/mit-b0",
             num_labels=2,
@@ -155,7 +155,7 @@ class SegformerB4(SegformerForSemanticSegmentation):
     SegformerB4 model.
     """
 
-    def __new__(cls, n_bands="3"):
+    def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
             "nvidia/mit-b0",
             num_labels=2,
@@ -169,7 +169,7 @@ class SegformerB5(SegformerForSemanticSegmentation):
     SegformerB5 model.
     """
 
-    def __new__(cls, n_bands="3"):
+    def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
             "nvidia/mit-b0",
             num_labels=2,
