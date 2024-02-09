@@ -333,8 +333,12 @@ def main(
     train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
 
     # 5- Create data loaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **kwargs)
-    val_loader = DataLoader(val_dataset, batch_size=test_batch_size, shuffle=False, **kwargs)
+    train_loader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, **kwargs
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
+    )
     test_loader = DataLoader(
         test_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
     )

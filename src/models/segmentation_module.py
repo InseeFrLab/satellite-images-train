@@ -226,6 +226,15 @@ class SegmentationModule(pl.LightningModule):
             }
         elif self.scheduler is optim.lr_scheduler.OneCycleLR:
             stepping_batches = self.trainer.estimated_stepping_batches
-            scheduler = self.scheduler(optimizer, max_lr=1e-3, total_steps=stepping_batches)
+            scheduler = self.scheduler(
+                optimizer,
+                max_lr=self.optimizer_params["lr"],
+                total_steps=stepping_batches,
+                div_factor=25,  # default
+            )
+            scheduler = {
+                "scheduler": scheduler,
+                "interval": "step",
+            }
 
         return [optimizer], [scheduler]
