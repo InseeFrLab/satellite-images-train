@@ -25,6 +25,7 @@ entry_points:
       building_class_weight: {type: float, default: 1.0}
       lr: {type: float, default: 0.01}
       momentum: {type: float, default: 0.9}
+      scheduler_name: {type: str, default: reduce_on_plateau}
       scheduler_patience: {type: int, default: 10}
       cuda: {type: int, default: 0}
       from_s3: {type: int, default: 0}
@@ -51,6 +52,7 @@ entry_points:
             --loss_name {loss_name} \
             --lr {lr} \
             --momentum {momentum} \
+            --scheduler_name {scheduler_name} \
             --scheduler_patience {scheduler_patience} \
             --cuda {cuda} \
             --label_smoothing {label_smoothing} \

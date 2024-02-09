@@ -14,6 +14,7 @@ from config.dataset import dataset_dict
 from config.loss import loss_dict
 from config.module import module_dict
 from config.task import task_dict
+from config.scheduling import scheduling_policies
 
 
 def get_trainer(
@@ -125,6 +126,19 @@ def get_loss(
         return loss_function(**kwargs)
 
 
+def get_scheduler(scheduler_name: str):
+    """
+    Instantiates a scheduler from a policy.
+
+    Args:
+        scheduling_name (str): Policy.
+    """
+    if scheduler_name not in scheduling_policies:
+        raise ValueError("Invalid scheduler.")
+    else:
+        return scheduling_policies[scheduler_name]
+
+
 def get_lightning_module(
     module_name: str,
     loss_name: str,
@@ -136,6 +150,7 @@ def get_lightning_module(
     lr: float,
     momentum: float,
     earlystop: Dict,
+    scheduler_name: str,
     scheduler_patience: int,
     cuda: int,
 ):
@@ -176,14 +191,15 @@ def get_lightning_module(
     )
 
     # TODO: faire get_optimizer with kwargs
+    # TODO: AdamW ?
     optimizer = torch.optim.Adam
     optimizer_params = {"lr": lr}
 
     # TODO: faire get_scheduler with kwargs
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau
+    scheduler = get_scheduler(scheduler_name)
     scheduler_params = {
-        "monitor": earlystop["monitor"],
-        "mode": earlystop["mode"],
+        "monitor": "validation_loss",
+        "mode": "min",
         "patience": scheduler_patience,
     }
     scheduler_interval = "epoch"

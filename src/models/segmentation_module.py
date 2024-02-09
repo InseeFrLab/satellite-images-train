@@ -212,11 +212,20 @@ class SegmentationModule(pl.LightningModule):
         Returns: optimizer and scheduler for pytorch lighting.
         """
         optimizer = self.optimizer(self.parameters(), **self.optimizer_params)
-        scheduler = self.scheduler(optimizer, self.scheduler_params["mode"])
-        scheduler = {
-            "scheduler": scheduler,
-            "monitor": self.scheduler_params["monitor"],
-            "interval": self.scheduler_interval,
-        }
+
+        if self.scheduler is optim.lr_scheduler.ReduceLROnPlateau:
+            scheduler = self.scheduler(
+                optimizer,
+                mode=self.scheduler_params["mode"],
+                patience=self.scheduler_params["patience"],
+            )
+            scheduler = {
+                "scheduler": scheduler,
+                "monitor": self.scheduler_params["monitor"],
+                "interval": self.scheduler_interval,
+            }
+        elif self.scheduler is optim.lr_scheduler.OneCycleLR:
+            stepping_batches = self.trainer.estimated_stepping_batches
+            scheduler = self.scheduler(optimizer, max_lr=1e-3, total_steps=stepping_batches)
 
         return [optimizer], [scheduler]

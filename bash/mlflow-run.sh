@@ -17,6 +17,7 @@ EPOCHS=120
 BATCH_SIZE=8
 TEST_BATCH_SIZE=8
 LR=0.001
+SCHEDULER_NAME=one_cycle
 BUILDING_CLASS_WEIGHT=5
 LOSS_NAME=bce_logits_weighted
 MODULE_NAME=single_class_deeplabv3
@@ -39,6 +40,7 @@ mlflow run ~/work/satellite-images-train/ \
     -P batch_size=$BATCH_SIZE \
     -P test_batch_size=$TEST_BATCH_SIZE \
     -P lr=$LR \
+    -P scheduler_name=$SCHEDULER_NAME \
     -P from_s3=$USE_S3 \
     -P loss_name=$LOSS_NAME \
     -P module_name=$MODULE_NAME \
