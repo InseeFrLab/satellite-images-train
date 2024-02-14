@@ -158,7 +158,7 @@ class SegformerB1(SemanticSegmentationSegformer):
 
     def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
-            "nvidia/mit-b0",
+            "nvidia/mit-b1",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
@@ -172,7 +172,7 @@ class SegformerB2(SemanticSegmentationSegformer):
 
     def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
-            "nvidia/mit-b0",
+            "nvidia/mit-b2",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
@@ -186,7 +186,7 @@ class SegformerB3(SemanticSegmentationSegformer):
 
     def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
-            "nvidia/mit-b0",
+            "nvidia/mit-b3",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
@@ -200,7 +200,7 @@ class SegformerB4(SemanticSegmentationSegformer):
 
     def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
-            "nvidia/mit-b0",
+            "nvidia/mit-b4",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
@@ -214,7 +214,7 @@ class SegformerB5(SemanticSegmentationSegformer):
 
     def __new__(cls, n_bands="3", logits: bool = True):
         return SegformerForSemanticSegmentation.from_pretrained(
-            "nvidia/mit-b0",
+            "nvidia/mit-b5",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
