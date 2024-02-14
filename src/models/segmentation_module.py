@@ -104,7 +104,6 @@ class SegmentationModule(pl.LightningModule):
             num_labels=len(id2label),
             ignore_index=0,
         )
-        print(metrics)
         # add per category metrics as individual key-value pairs
         per_category_accuracy = metrics.pop("per_category_accuracy").tolist()
         per_category_iou = metrics.pop("per_category_iou").tolist()
