@@ -104,13 +104,20 @@ class SegmentationModule(pl.LightningModule):
             num_labels=len(id2label),
             ignore_index=0,
         )
+        print(metrics)
         # add per category metrics as individual key-value pairs
         per_category_accuracy = metrics.pop("per_category_accuracy").tolist()
         per_category_iou = metrics.pop("per_category_iou").tolist()
 
         metrics.update({f"accuracy_{id2label[i]}": v for i, v in enumerate(per_category_accuracy)})
         metrics.update({f"iou_{id2label[i]}": v for i, v in enumerate(per_category_iou)})
-        return metrics["iou_building"]
+
+        iou_building = metrics["iou_building"]
+        if iou_building != iou_building:
+            # Nan: return 1 like for the other definition
+            return 1
+        else:
+            return iou_building
 
     def training_step(self, batch, batch_idx):
         """
@@ -131,6 +138,8 @@ class SegmentationModule(pl.LightningModule):
             logits = output.logits
             building_rate = positive_rate(logits, True)
             iou = self.compute_iou_segformer(logits, labels)
+            print(building_rate)
+            print(iou)
         else:
             output = self.forward(images)
             loss = self.loss(output, labels)
