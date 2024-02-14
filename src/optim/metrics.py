@@ -53,6 +53,6 @@ def positive_rate(output: torch.Tensor, logits: bool) -> torch.Tensor:
         # Single class: if > 0.5, prediction is 1
         preds = (output > 0.5).float()
     else:
-        preds = torch.argmax(output, axis=1)
+        preds = torch.argmax(output, axis=1).float()
 
     return torch.mean(preds)

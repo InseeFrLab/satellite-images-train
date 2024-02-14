@@ -100,7 +100,7 @@ class SegmentationModule(pl.LightningModule):
         id2label = {0: "background", 1: "building"}
         metrics = self.metric._compute(
             predictions=pred_labels,
-            references=labels,
+            references=labels.cpu(),
             num_labels=len(id2label),
             ignore_index=0,
         )
