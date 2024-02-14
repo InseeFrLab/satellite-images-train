@@ -1,7 +1,14 @@
+from typing import Optional
 import torchvision
+import torch
 from torch import nn
 from torchvision.models.segmentation.deeplabv3 import DeepLabHead
-from transformers import SegformerForSemanticSegmentation
+from transformers import (
+    SegformerForSemanticSegmentation,
+    SegformerPreTrainedModel,
+    SegformerModel,
+    SegformerDecodeHead,
+)
 
 
 class DeepLabv3Module(nn.Module):
@@ -94,7 +101,43 @@ class SingleClassDeepLabv3Module(nn.Module):
             return self.sigmoid_layer(logits)
 
 
-class SegformerB0(SegformerForSemanticSegmentation):
+class SemanticSegmentationSegformer(SegformerPreTrainedModel):
+    def __init__(self, config, logits: bool = True):
+        super().__init__(config)
+        self.segformer = SegformerModel(config)
+        self.decode_head = SegformerDecodeHead(config)
+        self.logits = logits
+
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    def forward(
+        self,
+        pixel_values: torch.FloatTensor,
+        labels: Optional[torch.LongTensor] = None,
+    ) -> torch.Tensor:
+        """
+        Forward method.
+        """
+        outputs = self.segformer(
+            pixel_values,
+            output_attentions=False,
+            output_hidden_states=True,  # we need the intermediate hidden states
+            return_dict=True,
+        )
+        encoder_hidden_states = outputs.hidden_states
+        logits = self.decode_head(encoder_hidden_states)
+
+        if labels is not None:
+            # upsample logits to the images' original size
+            return nn.functional.interpolate(
+                logits, size=labels.shape[-2:], mode="bilinear", align_corners=False
+            )
+        else:
+            return logits
+
+
+class SegformerB0(SemanticSegmentationSegformer):
     """
     SegformerB0 model.
     """
@@ -108,7 +151,7 @@ class SegformerB0(SegformerForSemanticSegmentation):
         )
 
 
-class SegformerB1(SegformerForSemanticSegmentation):
+class SegformerB1(SemanticSegmentationSegformer):
     """
     SegformerB1 model.
     """
@@ -122,7 +165,7 @@ class SegformerB1(SegformerForSemanticSegmentation):
         )
 
 
-class SegformerB2(SegformerForSemanticSegmentation):
+class SegformerB2(SemanticSegmentationSegformer):
     """
     SegformerB2 model.
     """
@@ -136,7 +179,7 @@ class SegformerB2(SegformerForSemanticSegmentation):
         )
 
 
-class SegformerB3(SegformerForSemanticSegmentation):
+class SegformerB3(SemanticSegmentationSegformer):
     """
     SegformerB3 model.
     """
@@ -150,7 +193,7 @@ class SegformerB3(SegformerForSemanticSegmentation):
         )
 
 
-class SegformerB4(SegformerForSemanticSegmentation):
+class SegformerB4(SemanticSegmentationSegformer):
     """
     SegformerB4 model.
     """
@@ -164,7 +207,7 @@ class SegformerB4(SegformerForSemanticSegmentation):
         )
 
 
-class SegformerB5(SegformerForSemanticSegmentation):
+class SegformerB5(SemanticSegmentationSegformer):
     """
     SegformerB5 model.
     """

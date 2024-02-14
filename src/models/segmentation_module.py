@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from torch import nn, optim
 import evaluate
 from optim.metrics import IOU, positive_rate
-from transformers import SegformerForSemanticSegmentation
+from models.components.segmentation_models import SemanticSegmentationSegformer
 
 
 class SegmentationModule(pl.LightningModule):
@@ -80,44 +80,6 @@ class SegmentationModule(pl.LightningModule):
             align_corners=False,
         )
 
-    def compute_iou_segformer(self, logits, labels) -> torch.Tensor:
-        """
-        Compute mean IOU for a SegFormer model output.
-
-        Args:
-            logits: Segformer logits model output.
-            labels: Labels.
-
-        Returns:
-            torch.Tensor: IOU for the building class.
-        """
-        # scale the logits to the size of the label
-        logits = self.upsample_logits(logits, labels.shape).argmax(dim=1)
-
-        pred_labels = logits.detach().cpu().numpy()
-        # currently using _compute instead of compute
-        # see this issue for more info: https://github.com/huggingface/evaluate/pull/328#issuecomment-1286866576
-        id2label = {0: "background", 1: "building"}
-        metrics = self.metric._compute(
-            predictions=pred_labels,
-            references=labels.cpu(),
-            num_labels=len(id2label),
-            ignore_index=0,
-        )
-        # add per category metrics as individual key-value pairs
-        per_category_accuracy = metrics.pop("per_category_accuracy").tolist()
-        per_category_iou = metrics.pop("per_category_iou").tolist()
-
-        metrics.update({f"accuracy_{id2label[i]}": v for i, v in enumerate(per_category_accuracy)})
-        metrics.update({f"iou_{id2label[i]}": v for i, v in enumerate(per_category_iou)})
-
-        iou_building = metrics["iou_building"]
-        if iou_building != iou_building:
-            # Nan: return 1 like for the other definition
-            return 1
-        else:
-            return iou_building
-
     def training_step(self, batch, batch_idx):
         """
         Training step.
@@ -131,17 +93,13 @@ class SegmentationModule(pl.LightningModule):
         images = batch["pixel_values"]
         labels = batch["labels"]
 
-        if isinstance(self.model, SegformerForSemanticSegmentation):
+        if isinstance(self.model, SemanticSegmentationSegformer):
             output = self.forward(images, labels)
-            loss = output.loss
-            logits = output.logits
-            building_rate = positive_rate(logits, True)
-            iou = self.compute_iou_segformer(logits, labels)
         else:
             output = self.forward(images)
-            loss = self.loss(output, labels)
-            building_rate = positive_rate(output, self.model.logits)
-            iou = IOU(output, labels, self.model.logits)
+        loss = self.loss(output, labels)
+        building_rate = positive_rate(output, self.model.logits)
+        iou = IOU(output, labels, self.model.logits)
 
         self.log("train_loss", loss, on_step=True, on_epoch=True)
         self.log("train_iou", iou, on_step=True, on_epoch=True)
@@ -162,17 +120,13 @@ class SegmentationModule(pl.LightningModule):
         images = batch["pixel_values"]
         labels = batch["labels"]
 
-        if isinstance(self.model, SegformerForSemanticSegmentation):
+        if isinstance(self.model, SemanticSegmentationSegformer):
             output = self.forward(images, labels)
-            loss = output.loss
-            logits = output.logits
-            building_rate = positive_rate(logits, True)
-            iou = self.compute_iou_segformer(logits, labels)
         else:
             output = self.forward(images)
-            loss = self.loss(output, labels)
-            building_rate = positive_rate(output, self.model.logits)
-            iou = IOU(output, labels, self.model.logits)
+        loss = self.loss(output, labels)
+        building_rate = positive_rate(output, self.model.logits)
+        iou = IOU(output, labels, self.model.logits)
 
         # Log on epoch, mean reduction
         self.log("validation_IOU", iou, on_step=True, on_epoch=True)
@@ -194,17 +148,13 @@ class SegmentationModule(pl.LightningModule):
         images = batch["pixel_values"]
         labels = batch["labels"]
 
-        if isinstance(self.model, SegformerForSemanticSegmentation):
+        if isinstance(self.model, SemanticSegmentationSegformer):
             output = self.forward(images, labels)
-            loss = output.loss
-            logits = output.logits
-            building_rate = positive_rate(logits, True)
-            iou = self.compute_iou_segformer(logits, labels)
         else:
             output = self.forward(images)
-            loss = self.loss(output, labels)
-            building_rate = positive_rate(output, self.model.logits)
-            iou = IOU(output, labels, self.model.logits)
+        loss = self.loss(output, labels)
+        building_rate = positive_rate(output, self.model.logits)
+        iou = IOU(output, labels, self.model.logits)
 
         self.log("test_loss", loss, on_epoch=True)
         self.log("test_IOU", iou, on_epoch=True)
