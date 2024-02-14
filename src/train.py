@@ -304,7 +304,6 @@ def main(
     )
     transform = A.Compose(
         [
-            A.RandomResizedCrop(*(tiles_size,) * 2, scale=(0.7, 1.0), ratio=(0.7, 1)),
             A.HorizontalFlip(),
             A.VerticalFlip(),
             # TODO: Calculer moyenne et variance sur toutes les images
