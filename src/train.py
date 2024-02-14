@@ -306,7 +306,6 @@ def main(
         [
             A.HorizontalFlip(),
             A.VerticalFlip(),
-            # TODO: Calculer moyenne et variance sur toutes les images
             A.Normalize(
                 max_pixel_value=255.0,
                 mean=normalization_mean,
@@ -318,7 +317,6 @@ def main(
     # Test transform
     test_transform = A.Compose(
         [
-            # TODO: Calculer moyenne et variance sur toutes les images
             A.Normalize(
                 max_pixel_value=255.0,
                 mean=normalization_mean,
