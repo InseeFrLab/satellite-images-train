@@ -21,12 +21,12 @@ spec:
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
               "EPOCHS": 120,
-              "BATCH_SIZE": 8,
-              "TEST_BATCH_SIZE": 8,
-              "LR": 0.001,
-              "BUILDING_CLASS_WEIGHT": 10,
-              "LOSS_NAME": "bce_logits_weighted",
-              "MODULE_NAME": "single_class_deeplabv3",
+              "BATCH_SIZE": 32,
+              "TEST_BATCH_SIZE": 32,
+              "LR": 0.00005,
+              "BUILDING_CLASS_WEIGHT": 50,
+              "LOSS_NAME": "cross_entropy_weighted",
+              "MODULE_NAME": "segformer-b5",
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
               "CUDA": 1
@@ -39,30 +39,12 @@ spec:
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
               "EPOCHS": 120,
-              "BATCH_SIZE": 8,
-              "TEST_BATCH_SIZE": 8,
-              "LR": 0.001,
-              "BUILDING_CLASS_WEIGHT": 15,
-              "LOSS_NAME": "bce_logits_weighted",
-              "MODULE_NAME": "single_class_deeplabv3",
-              "LABEL_SMOOTHING": 0.0,
-              "LOGITS": 1,
-              "CUDA": 1
-            },
-            { "TASK": "segmentation",
-              "SOURCE": "PLEIADES",
-              "DEP": "MAYOTTE",
-              "YEAR": 2022,
-              "TILES_SIZE": 250,
-              "TYPE_LABELER": "BDTOPO",
-              "USE_S3": 0,
-              "EPOCHS": 120,
-              "BATCH_SIZE": 8,
-              "TEST_BATCH_SIZE": 8,
-              "LR": 0.001,
-              "BUILDING_CLASS_WEIGHT": 20,
-              "LOSS_NAME": "bce_logits_weighted",
-              "MODULE_NAME": "single_class_deeplabv3",
+              "BATCH_SIZE": 32,
+              "TEST_BATCH_SIZE": 32,
+              "LR": 0.00005,
+              "BUILDING_CLASS_WEIGHT": 30,
+              "LOSS_NAME": "cross_entropy_weighted",
+              "MODULE_NAME": "segformer-b5",
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
               "CUDA": 1
@@ -183,6 +165,7 @@ spec:
                   -P module_name={{inputs.parameters.MODULE_NAME}} \
                   -P label_smoothing={{inputs.parameters.LABEL_SMOOTHING}} \
                   -P logits={{inputs.parameters.LOGITS}} \
+                  -P building_class_weight={{inputs.parameters.BUILDING_CLASS_WEIGHT}} \
                   -P cuda={{inputs.parameters.CUDA}}"
               ]
         volumeMounts:
