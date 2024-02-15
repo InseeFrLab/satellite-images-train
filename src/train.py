@@ -201,7 +201,7 @@ parser.add_argument(
 parser.add_argument(
     "--scheduler_patience",
     type=int,
-    default=10,
+    default=3,
     help="Number of epochs with no improvement after which learning rate will be reduced",
 )
 parser.add_argument(
@@ -267,7 +267,7 @@ def main(
 
     kwargs = {"num_workers": os.cpu_count(), "pin_memory": True} if args.cuda else {}
 
-    earlystop = {"monitor": "validation_loss", "patience": 35, "mode": "min"}
+    earlystop = {"monitor": "validation_loss", "patience": 10, "mode": "min"}
     checkpoints = [
         {
             "monitor": "validation_loss",
