@@ -16,7 +16,7 @@ from osgeo import gdal
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
-from functions.download_data import get_patchs_labels, normalization_params
+from functions.download_data import get_patchs_labels, normalization_params, get_golden_paths
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 from functions.filter import filter_indices_from_labels
 
@@ -293,6 +293,12 @@ def main(
     )
     test_patches.sort()
     test_labels.sort()
+    # Golden test dataset
+    golden_patches, golden_labels = get_golden_paths(
+        from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
+    )
+    golden_patches.sort()
+    golden_labels.sort()
 
     # 2- Define the transforms to apply
     normalization_mean, normalization_std = normalization_params(
@@ -330,6 +336,9 @@ def main(
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
     dataset = get_dataset(task, patchs, labels, n_bands, from_s3, transform)
     test_dataset = get_dataset(task, test_patches, test_labels, n_bands, from_s3, test_transform)
+    golden_dataset = get_dataset(
+        task, golden_patches, golden_labels, n_bands, from_s3, test_transform
+    )
 
     # 4- Use random_split to split the dataset
     train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
@@ -343,6 +352,9 @@ def main(
     )
     test_loader = DataLoader(
         test_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
+    )
+    golden_loader = DataLoader(
+        golden_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
     )
 
     # 6- Create the trainer and the lightning
@@ -377,7 +389,7 @@ def main(
         trainer.fit(light_module, train_loader, val_loader)
 
         # 8- Test
-        trainer.test(dataloaders=test_loader)
+        trainer.test(dataloaders=[test_loader, golden_loader])
 
 
 # Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training

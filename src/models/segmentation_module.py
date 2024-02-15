@@ -135,7 +135,7 @@ class SegmentationModule(pl.LightningModule):
 
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch, batch_idx, dataloader_idx):
         """
         Test step.
 
@@ -156,9 +156,9 @@ class SegmentationModule(pl.LightningModule):
         building_rate = positive_rate(output, self.model.logits)
         iou = IOU(output, labels, self.model.logits)
 
-        self.log("test_loss", loss, on_epoch=True)
-        self.log("test_IOU", iou, on_epoch=True)
-        self.log("test_building_rate", building_rate, on_epoch=True)
+        self.log(f"test_loss_{dataloader_idx}", loss, on_epoch=True)
+        self.log(f"test_IOU_{dataloader_idx}", iou, on_epoch=True)
+        self.log(f"test_building_rate_{dataloader_idx}", building_rate, on_epoch=True)
 
         return IOU
 

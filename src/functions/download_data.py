@@ -18,6 +18,84 @@ def get_file_system() -> S3FileSystem:
     )
 
 
+def get_golden_paths(
+    from_s3: bool,
+    task: str,
+    source: str,
+    dep: str,
+    year: str,
+    tiles_size: str,
+) -> Tuple[List[str], List[str]]:
+    """
+    Get paths to images and labels making up a golden dataset of 32 observations
+    from s3 or local.
+
+    Args:
+        from_s3 (bool): True if data should be downloaded from s3, False otherwise.
+        task (str): Task.
+        source (str): Satellite source.
+        dep (str): Department.
+        year (str): Year.
+        tiles_size (str): Tiles size.
+
+    Returns:
+        Tuple[List[str], List[str]]: Paths to patchs and labels.
+    """
+    if from_s3:
+        fs = get_file_system()
+
+        patchs = fs.ls(
+            (
+                f"projet-slums-detection/golden-test/patchs/"
+                f"{task}/{source}/{dep}/{year}/{tiles_size}"
+            )
+        )
+        labels = fs.ls(
+            (
+                f"projet-slums-detection/golden-test/labels/"
+                f"{task}/{source}/{dep}/{year}/{tiles_size}"
+            )
+        )
+    else:
+        patchs_path = (
+            f"data/data-preprocessed/golden-test/patchs/"
+            f"{task}/{source}/{dep}/{year}/{tiles_size}"
+        )
+        labels_path = (
+            f"data/data-preprocessed/golden-test/labels/{task}/{source}/{dep}/{year}/{tiles_size}"
+        )
+
+        patch_cmd = [
+            "mc",
+            "cp",
+            "-r",
+            f"s3/projet-slums-detection/golden-test/patchs/"
+            f"{task}/{source}/{dep}/{year}/{tiles_size}/",
+            patchs_path + "/",
+        ]
+        label_cmd = [
+            "mc",
+            "cp",
+            "-r",
+            f"s3/projet-slums-detection/golden-test/labels/"
+            f"{task}/{source}/{dep}/{year}/{tiles_size}/",
+            labels_path + "/",
+        ]
+        # download patchs
+        subprocess.run(patch_cmd, check=True)
+        # download labels
+        subprocess.run(label_cmd, check=True)
+
+        patchs = [
+            f"{patchs_path}/{filename}"
+            for filename in os.listdir(patchs_path)
+            if Path(filename).suffix != ".yaml"
+        ]
+        labels = [f"{labels_path}/{filename}" for filename in os.listdir(labels_path)]
+
+    return patchs, labels
+
+
 def get_patchs_labels(
     from_s3: bool,
     task: str,
