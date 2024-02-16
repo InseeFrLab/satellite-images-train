@@ -205,6 +205,12 @@ parser.add_argument(
     help="Number of epochs with no improvement after which learning rate will be reduced",
 )
 parser.add_argument(
+    "--patience",
+    type=int,
+    default=10,
+    help="Number of epochs with no improvement after which training stops",
+)
+parser.add_argument(
     "--from_s3",
     type=int,
     choices=[0, 1],
@@ -250,6 +256,7 @@ def main(
     momentum: float,
     scheduler_name: str,
     scheduler_patience: int,
+    patience: int,
     from_s3: int,
     seed: int,
     cuda: int,
@@ -267,7 +274,7 @@ def main(
 
     kwargs = {"num_workers": os.cpu_count(), "pin_memory": True} if args.cuda else {}
 
-    earlystop = {"monitor": "validation_loss", "patience": 10, "mode": "min"}
+    earlystop = {"monitor": "validation_loss", "patience": patience, "mode": "min"}
     checkpoints = [
         {
             "monitor": "validation_loss",
