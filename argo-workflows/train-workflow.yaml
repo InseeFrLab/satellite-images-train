@@ -15,36 +15,40 @@ spec:
         value: '[
             { "TASK": "segmentation",
               "SOURCE": "PLEIADES",
-              "DEP": "MAYOTTE",
+              "DEP": "MAYOTTE_CLEAN",
               "YEAR": 2022,
               "TILES_SIZE": 250,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
-              "EPOCHS": 120,
+              "EPOCHS": 200,
               "BATCH_SIZE": 32,
               "TEST_BATCH_SIZE": 32,
               "LR": 0.00005,
-              "BUILDING_CLASS_WEIGHT": 50,
+              "BUILDING_CLASS_WEIGHT": 5,
               "LOSS_NAME": "cross_entropy_weighted",
               "MODULE_NAME": "segformer-b5",
+              "SCHEDULER_NAME": "one_cycle",
+              "PATIENCE": 200,
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
               "CUDA": 1
             },
             { "TASK": "segmentation",
               "SOURCE": "PLEIADES",
-              "DEP": "MAYOTTE",
+              "DEP": "MAYOTTE_CLEAN",
               "YEAR": 2022,
               "TILES_SIZE": 250,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
-              "EPOCHS": 120,
+              "EPOCHS": 200,
               "BATCH_SIZE": 32,
               "TEST_BATCH_SIZE": 32,
               "LR": 0.00005,
-              "BUILDING_CLASS_WEIGHT": 30,
+              "BUILDING_CLASS_WEIGHT": 2,
               "LOSS_NAME": "cross_entropy_weighted",
               "MODULE_NAME": "segformer-b5",
+              "SCHEDULER_NAME": "one_cycle",
+              "PATIENCE": 200,
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
               "CUDA": 1
@@ -93,6 +97,10 @@ spec:
                   value: "{{item.LOSS_NAME}}"
                 - name: MODULE_NAME
                   value: "{{item.MODULE_NAME}}"
+                - name: SCHEDULER_NAME
+                  value: "{{item.SCHEDULER_NAME}}"
+                - name: PATIENCE
+                  value: "{{item.PATIENCE}}"
                 - name: LABEL_SMOOTHING
                   value: "{{item.LABEL_SMOOTHING}}"
                 - name: LOGITS
@@ -130,6 +138,8 @@ spec:
           - name: BUILDING_CLASS_WEIGHT
           - name: LOSS_NAME
           - name: MODULE_NAME
+          - name: SCHEDULER_NAME
+          - name: PATIENCE
           - name: LABEL_SMOOTHING
           - name: LOGITS
           - name: CUDA
@@ -164,6 +174,8 @@ spec:
                   -P loss_name={{inputs.parameters.LOSS_NAME}} \
                   -P module_name={{inputs.parameters.MODULE_NAME}} \
                   -P label_smoothing={{inputs.parameters.LABEL_SMOOTHING}} \
+                  -P scheduler_name={{inputs.parameters.SCHEDULER_NAME}} \
+                  -P patience={{inputs.parameters.PATIENCE}} \
                   -P logits={{inputs.parameters.LOGITS}} \
                   -P building_class_weight={{inputs.parameters.BUILDING_CLASS_WEIGHT}} \
                   -P cuda={{inputs.parameters.CUDA}}"
