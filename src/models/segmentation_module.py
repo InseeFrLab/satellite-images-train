@@ -4,7 +4,6 @@ from typing import Dict, Union, Optional
 import torch
 import pytorch_lightning as pl
 from torch import nn, optim
-import evaluate
 from optim.metrics import IOU, positive_rate
 from models.components.segmentation_models import SemanticSegmentationSegformer
 
@@ -44,7 +43,6 @@ class SegmentationModule(pl.LightningModule):
         self.scheduler = scheduler
         self.scheduler_params = scheduler_params
         self.scheduler_interval = scheduler_interval
-        self.metric = evaluate.load("mean_iou")
 
     def forward(self, batch: torch.Tensor, labels: Optional[torch.Tensor] = None):
         """
