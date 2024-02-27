@@ -5,6 +5,7 @@ from pathlib import Path
 
 from s3fs import S3FileSystem
 import yaml
+import numpy as np
 
 
 def get_file_system() -> S3FileSystem:
@@ -249,3 +250,24 @@ def normalization_params(
     with open(params_path) as f:
         params = yaml.safe_load(f)
     return params["mean"], params["std"]
+
+
+def pooled_std_dev(n: List[int], means: List[float], std_devs: List[float]):
+    """
+    Computes the pooled standard deviation of all the data given
+    the means, standard deviations, and number of observations
+    of n subsets of data.
+
+    Args:
+        n (List[int]): List of the number of observations in each subset of data.
+        means (List[float]): List of the means of each subset of data.
+        std_devs (List[float]): List of the standard deviations of each subset of data.
+
+    Returns:
+        The pooled standard deviation of all the data.
+    """
+    n_total = np.sum(n)
+    x_total = np.sum([ni*xi for ni, xi in zip(n, means)]) / n_total
+    var_total = np.sum([(ni-1)*si**2 for ni, si in zip(n, std_devs)]) + np.sum([ni*(xi-x_total)**2 for ni, xi in zip(n, means)])
+    pooled_std_dev = np.sqrt(var_total / (n_total - 1))
+    return pooled_std_dev

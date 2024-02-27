@@ -8,8 +8,8 @@ ENTRY_POINT=main
 TASK=segmentation
 
 SOURCE=PLEIADES
-DEP=MAYOTTE
-YEAR=2022
+MAYOTTE_2022=1
+MARTINIQUE_2022=1
 TILES_SIZE=250
 TYPE_LABELER=BDTOPO
 USE_S3=0
@@ -32,8 +32,8 @@ mlflow run ~/work/satellite-images-train/ \
     -P remote_server_uri=$MLFLOW_TRACKING_URI \
     -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
     -P source=$SOURCE \
-    -P dep=$DEP \
-    -P year=$YEAR \
+    -P mayotte_2022=$MAYOTTE_2022 \
+    -P martinique_2022=$MARTINIQUE_2022 \
     -P type_labeler=$TYPE_LABELER \
     -P task=$TASK \
     -P tiles_size=$TILES_SIZE \

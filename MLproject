@@ -8,8 +8,8 @@ entry_points:
       run_name: {type: str, default: default}
       task: {type: str, default: segmentation}
       source: {type: str, default: PLEIADES}
-      dep: {type: str, default: MAYOTTE}
-      year: {type: str, default: 2022}
+      mayotte_2022: {type: int, default: 1}
+      martinique_2022: {type: int, default: 0}
       tiles_size: {type: str, default: 250}
       augment_size: {type: int, default: 250}
       type_labeler: {type: str, default: BDTOPO}
@@ -40,8 +40,8 @@ entry_points:
             --run_name {run_name} \
             --task {task} \
             --source {source} \
-            --dep {dep} \
-            --year {year} \
+            --mayotte_2022 {mayotte_2022} \
+            --martinique_2022 {martinique_2022} \
             --tiles_size {tiles_size} \
             --augment_size {augment_size} \
             --type_labeler {type_labeler} \

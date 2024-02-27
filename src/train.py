@@ -1,7 +1,7 @@
 """
 Main script.
 """
-
+from typing import List, Tuple
 import argparse
 import gc
 import os
@@ -16,7 +16,12 @@ from osgeo import gdal
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
-from functions.download_data import get_patchs_labels, normalization_params, get_golden_paths
+from functions.download_data import (
+    get_patchs_labels,
+    normalization_params,
+    get_golden_paths,
+    pooled_std_dev,
+)
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 from functions.filter import filter_indices_from_labels
 
@@ -61,20 +66,19 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
-    "--dep",
-    type=str,
-    choices=["CAYENNE", "GUADELOUPE", "MARTINIQUE", "MAYOTTE", "MAYOTTE_CLEAN", "REUNION"],
-    default="MAYOTTE",
-    help="Departement used for the training",
+    "--mayotte_2022",
+    type=int,
+    choices=[0, 1],
+    default=1,
+    help="1 if Mayotte 2022 dataset is used, 0 otherwise",
     required=True,
 )
 parser.add_argument(
-    "--year",
+    "--martinique_2022",
     type=int,
-    choices=[2017, 2018, 2019, 2020, 2021, 2022],
-    metavar="N",
-    default=2022,
-    help="Year used for the training",
+    choices=[0, 1],
+    default=0,
+    help="1 if Martinique 2022 dataset is used, 0 otherwise",
     required=True,
 )
 parser.add_argument(
@@ -251,8 +255,8 @@ def main(
     run_name: str,
     task: str,
     source: str,
-    dep: str,
-    year: str,
+    deps: List[str],
+    years: List[str],
     tiles_size: int,
     augment_size: int,
     type_labeler: str,
@@ -300,22 +304,42 @@ def main(
         }
     ]
 
-    # Get patchs and labels for training
-    patchs, labels = get_patchs_labels(
-        from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
-    )
-    patchs.sort()
-    labels.sort()
-    # No filtering here
-    indices = filter_indices_from_labels(labels, -1.0, 2.0)
-    patchs = [patchs[idx] for idx in indices]
-    labels = [labels[idx] for idx in indices]
-    # Get patches and labels for test
-    test_patches, test_labels = get_patchs_labels(
-        from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
-    )
-    test_patches.sort()
-    test_labels.sort()
+    train_patches = []
+    train_labels = []
+    test_patches = []
+    test_labels = []
+    normalization_means = []
+    normalization_stds = []
+    weights = []
+    for dep, year in zip(deps, years):
+        # Get patchs and labels for training
+        patches, labels = get_patchs_labels(
+            from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
+        )
+        patches.sort()
+        labels.sort()
+        # No filtering here
+        indices = filter_indices_from_labels(labels, -1.0, 2.0)
+        train_patches += [patches[idx] for idx in indices]
+        train_labels += [labels[idx] for idx in indices]
+
+        # Get patches and labels for test
+        patches, labels = get_patchs_labels(
+            from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
+        )
+        patches.sort()
+        labels.sort()
+        test_patches += list(patches)
+        test_labels += list(labels)
+
+        # Get normalization parameters
+        normalization_mean, normalization_std = normalization_params(
+            task, source, dep, year, tiles_size, type_labeler
+        )
+        normalization_means.append(normalization_mean)
+        normalization_stds.append(normalization_std)
+        weights.append(len(indices))
+
     # Golden test dataset
     golden_patches, golden_labels = get_golden_paths(
         from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
@@ -324,13 +348,19 @@ def main(
     golden_labels.sort()
 
     # 2- Define the transforms to apply
-    normalization_mean, normalization_std = normalization_params(
-        task, source, dep, year, tiles_size, type_labeler
+    # Normalization mean
+    normalization_mean = np.average(
+        [mean[:n_bands] for mean in normalization_means], weights=weights, axis=0
     )
-    normalization_mean, normalization_std = (
-        normalization_mean[:n_bands],
-        normalization_std[:n_bands],
-    )
+    normalization_std = [
+        pooled_std_dev(
+            weights,
+            [mean[i] for mean in normalization_means],
+            [std[i] for std in normalization_stds],
+        )
+        for i in range(n_bands)
+    ]
+
     transform_list = [
         A.HorizontalFlip(),
         A.VerticalFlip(),
@@ -353,14 +383,13 @@ def main(
         ),
         ToTensorV2(),
     ]
-    # TODO: Normalization Mayotte 2022 for golden test set
     if augment_size != tiles_size:
         test_transform_list.insert(0, A.Resize(augment_size, augment_size))
     test_transform = A.Compose(test_transform_list)
 
     # 3- Retrieve the Dataset object given the params
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
-    dataset = get_dataset(task, patchs, labels, n_bands, from_s3, transform)
+    dataset = get_dataset(task, train_patches, train_labels, n_bands, from_s3, transform)
     test_dataset = get_dataset(task, test_patches, test_labels, n_bands, from_s3, test_transform)
     golden_dataset = get_dataset(
         task, golden_patches, golden_labels, n_bands, from_s3, test_transform
@@ -431,8 +460,35 @@ def main(
         trainer.test(dataloaders=[test_loader, golden_loader])
 
 
+def format_datasets(mayotte_2022: bool, martinique_2022: bool) -> Tuple[List[str], List[int]]:
+    """
+    Format datasets.
+
+    Args:
+        mayotte_2022 (bool): True if Mayotte 2022 dataset is used, False otherwise.
+        martinique_2022 (bool): True if Martinique 2022 dataset is used, False otherwise.
+    Returns:
+        Tuple[List[str], List[int]]: List of departments and years.
+    """
+    deps = []
+    years = []
+    if mayotte_2022:
+        deps.append("MAYOTTE_CLEAN")
+        years.append(2022)
+    if martinique_2022:
+        deps.append("MARTINIQUE")
+        years.append(2022)
+    return deps, years
+
+
 # Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training
 # Dans le prepro check si habitation ou non et mettre dans le nom du fichier
 
 if __name__ == "__main__":
-    main(**vars(args))
+    args_dict = vars(args)
+    datasets = {
+        "mayotte_2022": args_dict.pop("mayotte_2022"),
+        "martinique_2022": args_dict.pop("martinique_2022"),
+    }
+    deps, years = format_datasets(**datasets)
+    main(**args_dict, deps=deps, years=years)
