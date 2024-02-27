@@ -16,7 +16,12 @@ from osgeo import gdal
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
-from functions.download_data import get_patchs_labels, normalization_params, get_golden_paths, pooled_std_dev
+from functions.download_data import (
+    get_patchs_labels,
+    normalization_params,
+    get_golden_paths,
+    pooled_std_dev,
+)
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 from functions.filter import filter_indices_from_labels
 
@@ -315,12 +320,8 @@ def main(
         labels.sort()
         # No filtering here
         indices = filter_indices_from_labels(labels, -1.0, 2.0)
-        train_patches.append(
-            [patches[idx] for idx in indices]
-        )
-        train_labels.append(
-            [labels[idx] for idx in indices]
-        )
+        train_patches.append([patches[idx] for idx in indices])
+        train_labels.append([labels[idx] for idx in indices])
 
         # Get patches and labels for test
         patches, labels = get_patchs_labels(
@@ -349,16 +350,16 @@ def main(
     # 2- Define the transforms to apply
     # Normalization mean
     normalization_mean = np.average(
-        [mean[:n_bands] for mean in normalization_means],
-        weights=weights,
+        [mean[:n_bands] for mean in normalization_means], weights=weights, axis=0
     )
-    normalization_std = pooled_std_dev(
-        weights,
-        [mean[:n_bands] for mean in normalization_means],
-        [std[:n_bands] for std in normalization_stds]
-    )
-    print(normalization_stds)
-    print(normalization_std)
+    normalization_std = [
+        pooled_std_dev(
+            weights,
+            [mean[i] for mean in normalization_means],
+            [std[i] for std in normalization_stds],
+        )
+        for i in range(n_bands)
+    ]
 
     transform_list = [
         A.HorizontalFlip(),
@@ -459,10 +460,7 @@ def main(
         trainer.test(dataloaders=[test_loader, golden_loader])
 
 
-def format_datasets(
-    mayotte_2022: bool,
-    martinique_2022: bool
-) -> Tuple[List[str], List[int]]:
+def format_datasets(mayotte_2022: bool, martinique_2022: bool) -> Tuple[List[str], List[int]]:
     """
     Format datasets.
 
