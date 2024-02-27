@@ -320,8 +320,8 @@ def main(
         labels.sort()
         # No filtering here
         indices = filter_indices_from_labels(labels, -1.0, 2.0)
-        train_patches.append([patches[idx] for idx in indices])
-        train_labels.append([labels[idx] for idx in indices])
+        train_patches += [patches[idx] for idx in indices]
+        train_labels += [labels[idx] for idx in indices]
 
         # Get patches and labels for test
         patches, labels = get_patchs_labels(
@@ -329,8 +329,8 @@ def main(
         )
         patches.sort()
         labels.sort()
-        test_patches.append(patches)
-        test_labels.append(labels)
+        test_patches += list(patches)
+        test_labels += list(labels)
 
         # Get normalization parameters
         normalization_mean, normalization_std = normalization_params(
