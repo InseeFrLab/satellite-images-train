@@ -346,7 +346,6 @@ def main(
     transform = A.Compose(transform_list)
     # Test transform
     test_transform_list = [
-        A.Resize(augment_size, augment_size),
         A.Normalize(
             max_pixel_value=255.0,
             mean=normalization_mean,
@@ -354,6 +353,7 @@ def main(
         ),
         ToTensorV2(),
     ]
+    # TODO: Normalization Mayotte 2022 for golden test set
     if augment_size != tiles_size:
         test_transform_list.insert(0, A.Resize(augment_size, augment_size))
     test_transform = A.Compose(test_transform_list)
