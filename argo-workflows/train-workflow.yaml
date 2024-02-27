@@ -15,19 +15,19 @@ spec:
         value: '[
             { "TASK": "segmentation",
               "SOURCE": "PLEIADES",
-              "DEP": "MAYOTTE_CLEAN",
-              "YEAR": 2022,
+              "MAYOTTE_2022": 1,
+              "MARTINIQUE_2022": 1,
               "TILES_SIZE": 250,
               "AUGMENT_SIZE": 512,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
-              "EPOCHS": 2,
+              "EPOCHS": 150,
               "BATCH_SIZE": 32,
               "TEST_BATCH_SIZE": 32,
               "LR": 0.00005,
-              "BUILDING_CLASS_WEIGHT": 5,
-              "LOSS_NAME": "cross_entropy_weighted",
-              "MODULE_NAME": "segformer-b0",
+              "BUILDING_CLASS_WEIGHT": 2,
+              "LOSS_NAME": "bce_logits_weighted",
+              "MODULE_NAME": "single_class_deeplabv3",
               "SCHEDULER_NAME": "one_cycle",
               "PATIENCE": 200,
               "LABEL_SMOOTHING": 0.0,
@@ -53,10 +53,10 @@ spec:
               parameters:
                 - name: SOURCE
                   value: "{{item.SOURCE}}"
-                - name: DEP
-                  value: "{{item.DEP}}"
-                - name: YEAR
-                  value: "{{item.YEAR}}"
+                - name: MAYOTTE_2022
+                  value: "{{item.MAYOTTE_2022}}"
+                - name: MARTINIQUE_2022
+                  value: "{{item.MARTINIQUE_2022}}"
                 - name: TYPE_LABELER
                   value: "{{item.TYPE_LABELER}}"
                 - name: TASK
@@ -111,8 +111,8 @@ spec:
       inputs:
         parameters:
           - name: SOURCE
-          - name: DEP
-          - name: YEAR
+          - name: MAYOTTE_2022
+          - name: MARTINIQUE_2022
           - name: TYPE_LABELER
           - name: TASK
           - name: TILES_SIZE
@@ -149,8 +149,8 @@ spec:
                   -P remote_server_uri=$MLFLOW_TRACKING_URI \
                   -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
                   -P source={{inputs.parameters.SOURCE}} \
-                  -P dep={{inputs.parameters.DEP}} \
-                  -P year={{inputs.parameters.YEAR}} \
+                  -P mayotte_2022={{inputs.parameters.mayotte_2022}} \
+                  -P martinique_2022={{inputs.parameters.martinique_2022}} \
                   -P type_labeler={{inputs.parameters.TYPE_LABELER}} \
                   -P task={{inputs.parameters.TASK}} \
                   -P tiles_size={{inputs.parameters.TILES_SIZE}} \
