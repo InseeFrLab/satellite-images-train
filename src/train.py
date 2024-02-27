@@ -491,4 +491,4 @@ if __name__ == "__main__":
         "martinique_2022": args_dict.pop("martinique_2022"),
     }
     deps, years = format_datasets(**datasets)
-    main(**vars(args), deps=deps, years=years)
+    main(**args_dict, deps=deps, years=years)
