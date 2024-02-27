@@ -11,6 +11,7 @@ entry_points:
       dep: {type: str, default: MAYOTTE}
       year: {type: str, default: 2022}
       tiles_size: {type: str, default: 250}
+      augment_size: {type: int, default: 250}
       type_labeler: {type: str, default: BDTOPO}
       n_bands: {type: str, default: 3}
       logits: {type: int, default: 1}
@@ -42,6 +43,7 @@ entry_points:
             --dep {dep} \
             --year {year} \
             --tiles_size {tiles_size} \
+            --augment_size {augment_size} \
             --type_labeler {type_labeler} \
             --n_bands {n_bands} \
             --logits {logits} \

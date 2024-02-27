@@ -87,6 +87,13 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
+    "--augment_size",
+    type=int,
+    metavar="N",
+    default=250,
+    help="Size of input tiles after augmentation",
+)
+parser.add_argument(
     "--type_labeler",
     type=str,
     choices=["BDTOPO"],
@@ -247,6 +254,7 @@ def main(
     dep: str,
     year: str,
     tiles_size: int,
+    augment_size: int,
     type_labeler: str,
     n_bands: str,
     logits: int,
@@ -323,29 +331,32 @@ def main(
         normalization_mean[:n_bands],
         normalization_std[:n_bands],
     )
-    transform = A.Compose(
-        [
-            A.HorizontalFlip(),
-            A.VerticalFlip(),
-            A.Normalize(
-                max_pixel_value=255.0,
-                mean=normalization_mean,
-                std=normalization_std,
-            ),
-            ToTensorV2(),
-        ]
-    )
+    transform_list = [
+        A.HorizontalFlip(),
+        A.VerticalFlip(),
+        A.Normalize(
+            max_pixel_value=255.0,
+            mean=normalization_mean,
+            std=normalization_std,
+        ),
+        ToTensorV2(),
+    ]
+    if augment_size != tiles_size:
+        transform_list.insert(0, A.Resize(augment_size, augment_size))
+    transform = A.Compose(transform_list)
     # Test transform
-    test_transform = A.Compose(
-        [
-            A.Normalize(
-                max_pixel_value=255.0,
-                mean=normalization_mean,
-                std=normalization_std,
-            ),
-            ToTensorV2(),
-        ]
-    )
+    test_transform_list = [
+        A.Resize(augment_size, augment_size),
+        A.Normalize(
+            max_pixel_value=255.0,
+            mean=normalization_mean,
+            std=normalization_std,
+        ),
+        ToTensorV2(),
+    ]
+    if augment_size != tiles_size:
+        test_transform_list.insert(0, A.Resize(augment_size, augment_size))
+    test_transform = A.Compose(test_transform_list)
 
     # 3- Retrieve the Dataset object given the params
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
