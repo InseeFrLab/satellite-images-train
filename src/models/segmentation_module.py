@@ -122,6 +122,7 @@ class SegmentationModule(pl.LightningModule):
             output = self.forward(images, labels)
         else:
             output = self.forward(images)
+
         loss = self.loss(output, labels)
         building_rate = positive_rate(output, self.model.logits)
         iou = IOU(output, labels, self.model.logits)

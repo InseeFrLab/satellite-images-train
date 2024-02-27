@@ -60,18 +60,18 @@ class SegmentationDataset(Dataset):
                 n_bands=int(self.n_bands),
             )
 
-            label = torch.LongTensor(np.load(fs.open(f"s3://{self.labels[idx]}")))
+            label = np.load(fs.open(f"s3://{self.labels[idx]}"))
         else:
             si = SatelliteImage.from_raster(
                 file_path=self.patchs[idx], dep=None, date=None, n_bands=int(self.n_bands)
             )
 
-            label = torch.LongTensor(np.load(self.labels[idx]))
+            label = np.load(self.labels[idx])
 
         # Transforms
-        sample = self.transform(image=np.transpose(si.array, [1, 2, 0]), label=label)
+        sample = self.transform(image=np.transpose(si.array, [1, 2, 0]), mask=label)
         transformed_image = sample["image"]
-        transformed_label = sample["label"]
+        transformed_label = sample["mask"]
 
         metadata = {"path_image": self.patchs[idx], "path_label": self.labels[idx]}
         encoded_inputs = {
