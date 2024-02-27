@@ -33,7 +33,7 @@ spec:
               "LOGITS": 1,
               "FREEZE_ENCODER": 1,
               "CUDA": 1
-            },
+            }
             ]'
 
   templates:
