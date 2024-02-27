@@ -81,12 +81,15 @@ def get_dataset(
         return dataset_dict[task](patchs, labels, n_bands, fs, transform)
 
 
-def get_model(module_name: str, n_bands: str, logits: bool):
+def get_model(module_name: str, n_bands: str, logits: bool, freeze_encoder: bool):
     """
     Instantiate a module based on the provided module type.
 
     Args:
-        module_type (str): Type of module to instantiate.
+        module_name (str): Type of module to instantiate.
+        n_bands (int): Number of bands.
+        logits (bool): Whether to use logits in the model.
+        freeze_encoder (bool): Whether to freeze the encoder.
 
     Returns:
         object: Instance of the specified module.
@@ -94,7 +97,7 @@ def get_model(module_name: str, n_bands: str, logits: bool):
     if module_name not in module_dict:
         raise ValueError("Invalid module type")
 
-    return module_dict[module_name](n_bands, logits)
+    return module_dict[module_name](n_bands, logits, freeze_encoder)
 
 
 def get_loss(
@@ -146,6 +149,7 @@ def get_lightning_module(
     label_smoothing: float,
     n_bands: str,
     logits: bool,
+    freeze_encoder: bool,
     task: str,
     lr: float,
     momentum: float,
@@ -165,6 +169,8 @@ def get_lightning_module(
             examples in the loss fn.
         label_smoothing (float): Label smoothing in the loss fn.
         n_bands (str): Number of bands.
+        logits (bool): Whether to use logits in the model.
+        freeze_encoder (bool): Whether to freeze the encoder.
         task (str): Task.
         lr (float): Learning rate.
         momentum (float): Momentum.
@@ -181,7 +187,7 @@ def get_lightning_module(
     else:
         LightningModule = task_dict[task]
 
-    model = get_model(module_name, n_bands, logits)
+    model = get_model(module_name, n_bands, logits, freeze_encoder)
     if cuda:
         model.cuda()
     # TODO: losses only compatible with certain model outputs

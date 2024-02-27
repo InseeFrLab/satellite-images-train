@@ -19,6 +19,7 @@ TEST_BATCH_SIZE=32
 LR=0.00005
 SCHEDULER_NAME=one_cycle
 BUILDING_CLASS_WEIGHT=40
+FREEZE_ENCODER=1
 LOSS_NAME=bce_logits_weighted
 MODULE_NAME=single_class_deeplabv3
 LABEL_SMOOTHING=0.0
@@ -46,4 +47,6 @@ mlflow run ~/work/satellite-images-train/ \
     -P module_name=$MODULE_NAME \
     -P label_smoothing=$LABEL_SMOOTHING \
     -P logits=$LOGITS \
+    -P building_class_weight=$BUILDING_CLASS_WEIGHT \
+    -P freeze_encoder=$FREEZE_ENCODER \
     -P cuda=$CUDA
