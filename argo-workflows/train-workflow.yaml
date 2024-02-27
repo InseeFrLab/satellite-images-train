@@ -7,7 +7,7 @@ spec:
     - name: dshm
       emptyDir:
         medium: Memory
-        sizeLimit: 10Gi
+        sizeLimit: 20Gi
   entrypoint: main
   arguments:
     parameters:
@@ -21,7 +21,7 @@ spec:
               "AUGMENT_SIZE": 512,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
-              "EPOCHS": 200,
+              "EPOCHS": 2,
               "BATCH_SIZE": 32,
               "TEST_BATCH_SIZE": 32,
               "LR": 0.00005,
