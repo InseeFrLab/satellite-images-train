@@ -108,6 +108,13 @@ parser.add_argument(
     help="Should model outputs be logits or probabilities",
 )
 parser.add_argument(
+    "--freeze_encoder",
+    type=int,
+    choices=[0, 1],
+    default=0,
+    help="Should the encoder be frozen",
+)
+parser.add_argument(
     "--batch_size",
     type=int,
     default=32,
@@ -243,6 +250,7 @@ def main(
     type_labeler: str,
     n_bands: str,
     logits: int,
+    freeze_encoder: int,
     epochs: int,
     batch_size: int,
     test_batch_size: int,
@@ -374,6 +382,7 @@ def main(
         label_smoothing=label_smoothing,
         n_bands=n_bands,
         logits=bool(logits),
+        freeze_encoder=bool(freeze_encoder),
         task=task,
         lr=lr,
         momentum=momentum,

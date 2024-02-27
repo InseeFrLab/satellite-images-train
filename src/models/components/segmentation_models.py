@@ -17,13 +17,14 @@ class DeepLabv3Module(nn.Module):
     take into account multiscales effect.
     """
 
-    def __init__(self, n_bands: int = 3, logits: bool = True):
+    def __init__(self, n_bands: int = 3, logits: bool = True, freeze_encoder: bool = False):
         """
         Module constructor.
 
         Args:
             n_bands (int): Number of channels of the input image.
             logits (bool): True if logits out, if False probabilities.
+            freeze_encoder (bool): True to freeze encoder parameters.
         """
         super().__init__()
         self.model = torchvision.models.segmentation.deeplabv3_resnet101(
@@ -44,6 +45,10 @@ class DeepLabv3Module(nn.Module):
                 bias=False,
             )
 
+        if freeze_encoder:
+            for param in self.model.backbone.parameters():
+                param.requires_grad = False
+
     def forward(self, x):
         """
         Forward method.
@@ -54,6 +59,20 @@ class DeepLabv3Module(nn.Module):
         else:
             return self.softmax_layer(logits)
 
+    def freeze(self):
+        """
+        Freeze encoder parameters.
+        """
+        for param in self.model.backbone.parameters():
+            param.requires_grad = False
+
+    def unfreeze(self):
+        """
+        Unfreeze encoder parameters.
+        """
+        for param in self.model.backbone.parameters():
+            param.requires_grad = True
+
 
 class SingleClassDeepLabv3Module(nn.Module):
     """
@@ -62,13 +81,14 @@ class SingleClassDeepLabv3Module(nn.Module):
     take into account multiscales effect.
     """
 
-    def __init__(self, n_bands: int = 3, logits: bool = True):
+    def __init__(self, n_bands: int = 3, logits: bool = True, freeze_encoder: bool = False):
         """
         Module constructor.
 
         Args:
             n_bands (int): Number of channels of the input image.
             logits (bool): True if logits out, if False probabilities.
+            freeze_encoder (bool): True to freeze encoder parameters.
         """
         super().__init__()
         self.model = torchvision.models.segmentation.deeplabv3_resnet101(
@@ -89,6 +109,10 @@ class SingleClassDeepLabv3Module(nn.Module):
                 bias=False,
             )
 
+        if freeze_encoder:
+            for param in self.model.backbone.parameters():
+                param.requires_grad = False
+
     def forward(self, x):
         """
         Forward method.
@@ -98,6 +122,20 @@ class SingleClassDeepLabv3Module(nn.Module):
             return logits
         else:
             return self.sigmoid_layer(logits)
+
+    def freeze(self):
+        """
+        Freeze encoder parameters.
+        """
+        for param in self.model.backbone.parameters():
+            param.requires_grad = False
+
+    def unfreeze(self):
+        """
+        Unfreeze encoder parameters.
+        """
+        for param in self.model.backbone.parameters():
+            param.requires_grad = True
 
 
 class SemanticSegmentationSegformer(SegformerPreTrainedModel):
@@ -109,6 +147,20 @@ class SemanticSegmentationSegformer(SegformerPreTrainedModel):
 
         # Initialize weights and apply final processing
         self.post_init()
+
+    def freeze(self):
+        """
+        Freeze encoder parameters.
+        """
+        for param in self.segformer.parameters():
+            param.requires_grad = False
+
+    def unfreeze(self):
+        """
+        Unfreeze encoder parameters.
+        """
+        for param in self.segformer.parameters():
+            param.requires_grad = True
 
     def forward(
         self,
@@ -141,13 +193,16 @@ class SegformerB0(SemanticSegmentationSegformer):
     SegformerB0 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True):
-        return SemanticSegmentationSegformer.from_pretrained(
+    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+        model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b0",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
         )
+        if freeze_encoder:
+            model.freeze()
+        return model
 
 
 class SegformerB1(SemanticSegmentationSegformer):
@@ -155,13 +210,16 @@ class SegformerB1(SemanticSegmentationSegformer):
     SegformerB1 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True):
-        return SemanticSegmentationSegformer.from_pretrained(
+    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+        model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b1",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
         )
+        if freeze_encoder:
+            model.freeze()
+        return model
 
 
 class SegformerB2(SemanticSegmentationSegformer):
@@ -169,13 +227,16 @@ class SegformerB2(SemanticSegmentationSegformer):
     SegformerB2 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True):
-        return SemanticSegmentationSegformer.from_pretrained(
+    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+        model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b2",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
         )
+        if freeze_encoder:
+            model.freeze()
+        return model
 
 
 class SegformerB3(SemanticSegmentationSegformer):
@@ -183,13 +244,16 @@ class SegformerB3(SemanticSegmentationSegformer):
     SegformerB3 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True):
-        return SemanticSegmentationSegformer.from_pretrained(
+    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+        model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b3",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
         )
+        if freeze_encoder:
+            model.freeze()
+        return model
 
 
 class SegformerB4(SemanticSegmentationSegformer):
@@ -197,13 +261,16 @@ class SegformerB4(SemanticSegmentationSegformer):
     SegformerB4 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True):
-        return SemanticSegmentationSegformer.from_pretrained(
+    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+        model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b4",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
         )
+        if freeze_encoder:
+            model.freeze()
+        return model
 
 
 class SegformerB5(SemanticSegmentationSegformer):
@@ -211,10 +278,13 @@ class SegformerB5(SemanticSegmentationSegformer):
     SegformerB5 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True):
-        return SemanticSegmentationSegformer.from_pretrained(
+    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+        model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b5",
             num_labels=2,
             id2label={0: "background", 1: "building"},
             label2id={"background": 0, "building": 1},
         )
+        if freeze_encoder:
+            model.freeze()
+        return model
