@@ -451,6 +451,7 @@ def main(
             code_paths=[
                 "src/models/",
                 "src/optim/",
+                "src/config/",
                 f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/train/metrics-normalization.yaml",
             ],
         )
