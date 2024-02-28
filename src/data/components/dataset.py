@@ -71,7 +71,7 @@ class SegmentationDataset(Dataset):
         # Transforms
         sample = self.transform(image=np.transpose(si.array, [1, 2, 0]), mask=label)
         transformed_image = sample["image"]
-        transformed_label = sample["mask"]
+        transformed_label = sample["mask"].type(torch.LongTensor)
 
         metadata = {"path_image": self.patchs[idx], "path_label": self.labels[idx]}
         encoded_inputs = {
