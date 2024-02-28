@@ -7,7 +7,7 @@ spec:
     - name: dshm
       emptyDir:
         medium: Memory
-        sizeLimit: 20Gi
+        sizeLimit: 64Gi
   entrypoint: main
   arguments:
     parameters:
@@ -16,23 +16,23 @@ spec:
             { "TASK": "segmentation",
               "SOURCE": "PLEIADES",
               "MAYOTTE_2022": 1,
-              "MARTINIQUE_2022": 1,
+              "MARTINIQUE_2022": 0,
               "TILES_SIZE": 250,
-              "AUGMENT_SIZE": 250,
+              "AUGMENT_SIZE": 512,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
-              "EPOCHS": 20,
-              "BATCH_SIZE": 32,
-              "TEST_BATCH_SIZE": 32,
+              "EPOCHS": 150,
+              "BATCH_SIZE": 16,
+              "TEST_BATCH_SIZE": 16,
               "LR": 0.00005,
               "BUILDING_CLASS_WEIGHT": 2,
-              "LOSS_NAME": "bce_logits_weighted",
-              "MODULE_NAME": "single_class_deeplabv3",
+              "LOSS_NAME": "cross_entropy_weighted",
+              "MODULE_NAME": "segformer-b5",
               "SCHEDULER_NAME": "one_cycle",
               "PATIENCE": 200,
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
-              "FREEZE_ENCODER": 1,
+              "FREEZE_ENCODER": 0,
               "CUDA": 1
             }
             ]'
@@ -137,7 +137,12 @@ spec:
         image: inseefrlab/satellite-images-train:v0.0.6
         imagePullPolicy: Always
         resources:
+          requests:
+            memory: 64Gi
+            cpu: 40
           limits:
+            memory: 128Gi
+            cpu: 50
             nvidia.com/gpu: 1
         command: ["/bin/bash", -c]
         args: ["git clone https://github.com/InseeFrLab/satellite-images-train.git &&
