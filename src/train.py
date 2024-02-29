@@ -316,6 +316,9 @@ def main(
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
         )
+        patches = patches[:30]
+        labels = labels[:30]
+
         patches.sort()
         labels.sort()
         # No filtering here
@@ -327,6 +330,9 @@ def main(
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
         )
+        patches = patches[:30]
+        labels = labels[:30]
+
         patches.sort()
         labels.sort()
         test_patches += list(patches)
@@ -344,6 +350,9 @@ def main(
     golden_patches, golden_labels = get_golden_paths(
         from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
     )
+    golden_patches = golden_patches[:30]
+    golden_labels = golden_labels[:30]
+
     golden_patches.sort()
     golden_labels.sort()
 
@@ -435,8 +444,6 @@ def main(
     mlflow.set_tracking_uri(remote_server_uri)
     mlflow.set_experiment(experiment_name)
     with mlflow.start_run(run_name=run_name):
-        mlflow.autolog()
-
         # 7- Training the model on the training set
         torch.cuda.empty_cache()
         torch.set_float32_matmul_precision("medium")
@@ -444,21 +451,39 @@ def main(
 
         trainer.fit(light_module, train_loader, val_loader)
 
+        if trainer.global_rank == 0:
+            # mlflow.pytorch.autolog(log_models=False)
+            mlflow.pytorch.autolog()
+
+        best_model = type(light_module).load_from_checkpoint(
+            checkpoint_path=trainer.checkpoint_callback.best_model_path,
+            model=light_module.model,
+            loss=light_module.loss,
+            optimizer=light_module.optimizer,
+            optimizer_params=light_module.optimizer_params,
+            scheduler=light_module.scheduler,
+            scheduler_params=light_module.scheduler_params,
+            scheduler_interval=light_module.scheduler_interval,
+        )
+
         # Logging the model with the associated code
         mlflow.pytorch.log_model(
-            pytorch_model=light_module,
             artifact_path="model",
             code_paths=[
                 "src/models/",
                 "src/optim/",
                 "src/config/",
-                f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/train/metrics-normalization.yaml",
             ],
+            pytorch_model=best_model.to("cpu"),
+        )
+
+        mlflow.log_artifact(
+            f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/train/metrics-normalization.yaml"
         )
         # TODO: Add signature for inference
 
         # 8- Test
-        trainer.test(dataloaders=[test_loader, golden_loader])
+        trainer.test(dataloaders=[test_loader, golden_loader], ckpt_path="best")
 
 
 def format_datasets(mayotte_2022: bool, martinique_2022: bool) -> Tuple[List[str], List[int]]:
