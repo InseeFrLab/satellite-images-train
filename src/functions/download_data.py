@@ -69,6 +69,7 @@ def get_golden_paths(
         patch_cmd = [
             "mc",
             "cp",
+            "--quiet",
             "-r",
             f"s3/projet-slums-detection/golden-test/patchs/"
             f"{task}/{source}/{dep}/{year}/{tiles_size}/",
@@ -77,6 +78,7 @@ def get_golden_paths(
         label_cmd = [
             "mc",
             "cp",
+            "--quiet",
             "-r",
             f"s3/projet-slums-detection/golden-test/labels/"
             f"{task}/{source}/{dep}/{year}/{tiles_size}/",
@@ -214,6 +216,7 @@ def download_data(
     patch_cmd = [
         "mc",
         "cp",
+        "--quiet",
         "-r",
         f"s3/projet-slums-detection/data-preprocessed/patchs/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",  # noqa
         f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",
@@ -222,6 +225,7 @@ def download_data(
     label_cmd = [
         "mc",
         "cp",
+        "--quiet",
         "-r",
         f"s3/projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",  # noqa
         f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",
@@ -267,7 +271,9 @@ def pooled_std_dev(n: List[int], means: List[float], std_devs: List[float]):
         The pooled standard deviation of all the data.
     """
     n_total = np.sum(n)
-    x_total = np.sum([ni*xi for ni, xi in zip(n, means)]) / n_total
-    var_total = np.sum([(ni-1)*si**2 for ni, si in zip(n, std_devs)]) + np.sum([ni*(xi-x_total)**2 for ni, xi in zip(n, means)])
+    x_total = np.sum([ni * xi for ni, xi in zip(n, means)]) / n_total
+    var_total = np.sum([(ni - 1) * si**2 for ni, si in zip(n, std_devs)]) + np.sum(
+        [ni * (xi - x_total) ** 2 for ni, xi in zip(n, means)]
+    )
     pooled_std_dev = np.sqrt(var_total / (n_total - 1))
     return pooled_std_dev
