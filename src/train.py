@@ -365,7 +365,7 @@ def main(
         A.HorizontalFlip(),
         A.VerticalFlip(),
         A.Normalize(
-            max_pixel_value=255.0,
+            max_pixel_value=1.0,
             mean=normalization_mean,
             std=normalization_std,
         ),
@@ -377,7 +377,7 @@ def main(
     # Test transform
     test_transform_list = [
         A.Normalize(
-            max_pixel_value=255.0,
+            max_pixel_value=1.0,
             mean=normalization_mean,
             std=normalization_std,
         ),
