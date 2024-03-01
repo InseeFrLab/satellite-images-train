@@ -438,6 +438,7 @@ def main(
     mlflow.set_tracking_uri(remote_server_uri)
     mlflow.set_experiment(experiment_name)
     with mlflow.start_run(run_name=run_name):
+        mlflow.pytorch.autolog()
         # 7- Training the model on the training set
         torch.cuda.empty_cache()
         torch.set_float32_matmul_precision("medium")
