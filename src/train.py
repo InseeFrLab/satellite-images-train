@@ -474,8 +474,12 @@ def main(
             pytorch_model=best_model.to("cpu"),
         )
 
-        mlflow.log_artifact(
-            f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/train/metrics-normalization.yaml"
+        # Log normalization parameters
+        mlflow.log_params(
+            {
+                "normalization_mean": normalization_mean.tolist(),
+                "normalization_std": normalization_std,
+            }
         )
         # TODO: Add signature for inference
 
