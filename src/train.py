@@ -316,8 +316,6 @@ def main(
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
         )
-        patches = patches[:30]
-        labels = labels[:30]
 
         patches.sort()
         labels.sort()
@@ -330,8 +328,6 @@ def main(
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
         )
-        patches = patches[:30]
-        labels = labels[:30]
 
         patches.sort()
         labels.sort()
@@ -350,8 +346,6 @@ def main(
     golden_patches, golden_labels = get_golden_paths(
         from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
     )
-    golden_patches = golden_patches[:30]
-    golden_labels = golden_labels[:30]
 
     golden_patches.sort()
     golden_labels.sort()
