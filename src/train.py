@@ -17,12 +17,7 @@ from osgeo import gdal
 from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
-from functions.download_data import (
-    get_patchs_labels,
-    normalization_params,
-    get_golden_paths,
-    pooled_std_dev,
-)
+
 from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 from functions.filter import filter_indices_from_labels
 

@@ -104,8 +104,8 @@ output_modif[0][:,0,0]
 
 # TO DO :
 
-0) création d'un data loader (sans augmentation), etre en mesure de recuperer un batch (transform)
-1) creation modele à la main type Unet ou autre avec entrée ok sortie ok 
-2) intégration du modèle dans le train.py (dataloader de taille réduit) -> puis demander àà thomas faria argoworkfloww
-3) Revue de littérature + application  (plein de modeles sur hugging face recuperable )
+# 0) création d'un data loader (sans augmentation), etre en mesure de recuperer un batch (transform)
+# 1) creation modele à la main type Unet ou autre avec entrée ok sortie ok 
+# 2) intégration du modèle dans le train.py (dataloader de taille réduit) -> puis demander àà thomas faria argoworkfloww
+# 3) Revue de littérature + application  (plein de modeles sur hugging face recuperable )
 
