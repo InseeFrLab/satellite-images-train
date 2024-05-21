@@ -1,4 +1,5 @@
 """
+
 Main script.
 """
 from typing import List, Tuple
@@ -34,7 +35,7 @@ gdal.UseExceptions()
 
 remote_server_uri = "https://projet-slums-detection-128833.user.lab.sspcloud.fr"
 experiment_name = "test-dev"
-run_name: "kikito_stagios"
+run_name =  "kikito_stagios"
 task = "segmentation"
 source = "PLEIADES"
 deps =  ["MARTINIQUE"]
@@ -51,7 +52,7 @@ test_batch_size = 8
 num_sanity_val_steps = 1
 accumulate_batch = 8
 module_name = "segformer-b5"
-loss_name: "cross_entropy_weighted"
+loss_name =  "cross_entropy_weighted"
 building_class_weight = 1
 label_smoothing = 0.0
 lr = 0.00005
@@ -177,6 +178,14 @@ test_transform = A.Compose(test_transform_list)
 # 3- Retrieve the Dataset object given the params
 # TODO: mettre en Params comme Tom a fait dans formation-mlops
 dataset = get_dataset(task, train_patches, train_labels, n_bands, from_s3, transform)
+dataset = get_dataset(task, train_patches[:40], train_labels[:40], n_bands, from_s3, transform)
+len(dataset)
+# dico = dataset[2]
+# dico.keys()
+# dico["pixel_values"].shape
+# dico["labels"].shape
+# dico["metadata"]
+
 test_dataset = get_dataset(task, test_patches, test_labels, n_bands, from_s3, test_transform)
 golden_dataset = get_dataset(
     task, golden_patches, golden_labels, n_bands, from_s3, test_transform
@@ -185,6 +194,9 @@ golden_dataset = get_dataset(
 # 4- Use random_split to split the dataset
 train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
 
+# len(dataset)
+# len(train_dataset)
+# len(val_dataset)
 # 5- Create data loaders
 train_loader = DataLoader(
     train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, **kwargs
@@ -199,7 +211,21 @@ golden_loader = DataLoader(
     golden_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
 )
 
+
+# train_dataloader_iter = iter(train_loader)
+# batch = next(train_dataloader_iter)
+
+# batch.keys()
+# batch['pixel_values'].shape
+
+# len(train_dataset) % 8
+
+# for batch in tqdm(train_dataloader_iter):
+#     longueur = batch.shape[0]
+
+
 # 6- Create the trainer and the lightning
+# epochs = 2
 trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)
 
 light_module = get_lightning_module(
@@ -221,6 +247,8 @@ light_module = get_lightning_module(
 
 mlflow.set_tracking_uri(remote_server_uri)
 mlflow.set_experiment(experiment_name)
+run_name = "kikito2"
+
 with mlflow.start_run(run_name=run_name):
     mlflow.pytorch.autolog()
     # 7- Training the model on the training set
