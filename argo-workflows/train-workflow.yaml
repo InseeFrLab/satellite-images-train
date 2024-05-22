@@ -35,7 +35,7 @@ spec:
               "LOGITS": 1,
               "FREEZE_ENCODER": 0,
               "CUDA": 1,
-              "RUN_NAME": "JeSuisTonStagios2"
+              "RUN_NAME": "kikitax"
             }
             ]'
 
@@ -157,6 +157,7 @@ spec:
                   --entry-point $ENTRY_POINT \
                   -P remote_server_uri=$MLFLOW_TRACKING_URI \
                   -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
+                  -P run_name={{inputs.parameters.RUN_NAME}} \
                   -P source={{inputs.parameters.SOURCE}} \
                   -P mayotte_2022={{inputs.parameters.MAYOTTE_2022}} \
                   -P martinique_2022={{inputs.parameters.MARTINIQUE_2022}} \
