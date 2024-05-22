@@ -18,7 +18,7 @@ spec:
               "MAYOTTE_2022": 1,
               "MARTINIQUE_2022": 0,
               "TILES_SIZE": 250,
-              "AUGMENT_SIZE": 512,
+              "AUGMENT_SIZE": 250,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
               "EPOCHS": 150,
@@ -27,13 +27,14 @@ spec:
               "LR": 0.00005,
               "BUILDING_CLASS_WEIGHT": 2,
               "LOSS_NAME": "cross_entropy_weighted",
-              "MODULE_NAME": "segformer-b5",
+              "MODULE_NAME": "UNetGaetan",
               "SCHEDULER_NAME": "one_cycle",
               "PATIENCE": 200,
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
               "FREEZE_ENCODER": 0,
-              "CUDA": 1
+              "CUDA": 1,
+              "RUN_NAME": "JeSuisTonStagios"
             }
             ]'
 
@@ -93,6 +94,8 @@ spec:
                   value: "{{item.FREEZE_ENCODER}}"
                 - name: CUDA
                   value: "{{item.CUDA}}"
+                - name: RUN_NAME
+                  value: "{{item.RUN_NAME}}"
 
             # Pass the inputs to the task using "withParam"
             withParam: "{{workflow.parameters.training-conf-list}}"
@@ -110,6 +113,7 @@ spec:
     - name: run-training-wt
       inputs:
         parameters:
+          - name: RUN_NAME
           - name: SOURCE
           - name: MAYOTTE_2022
           - name: MARTINIQUE_2022
@@ -147,12 +151,14 @@ spec:
         command: ["/bin/bash", -c]
         args: ["git clone https://github.com/InseeFrLab/satellite-images-train.git &&
               cd satellite-images-train/ &&
+              git checkout kikito &&
               export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT &&
               mlflow run ~/work/satellite-images-train/ \
                   --env-manager=local \
                   --entry-point $ENTRY_POINT \
                   -P remote_server_uri=$MLFLOW_TRACKING_URI \
                   -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
+                  -p run_name = {{inputs.parameters.RUN_NAME}}\
                   -P source={{inputs.parameters.SOURCE}} \
                   -P mayotte_2022={{inputs.parameters.MAYOTTE_2022}} \
                   -P martinique_2022={{inputs.parameters.MARTINIQUE_2022}} \
