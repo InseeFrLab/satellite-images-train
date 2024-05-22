@@ -136,8 +136,6 @@ spec:
           - name: LOGITS
           - name: FREEZE_ENCODER
           - name: CUDA
-      nodeSelector:
-        nvidia.com/gpu.product: "NVIDIA-H100-PCIe"
       container:
         image: inseefrlab/satellite-images-train:v0.0.6
         imagePullPolicy: Always
@@ -159,7 +157,7 @@ spec:
                   --entry-point $ENTRY_POINT \
                   -P remote_server_uri=$MLFLOW_TRACKING_URI \
                   -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
-                  -p run_name = {{inputs.parameters.RUN_NAME}}\
+                  -P run_name={{inputs.parameters.RUN_NAME}}\
                   -P source={{inputs.parameters.SOURCE}} \
                   -P mayotte_2022={{inputs.parameters.MAYOTTE_2022}} \
                   -P martinique_2022={{inputs.parameters.MARTINIQUE_2022}} \
