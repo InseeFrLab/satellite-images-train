@@ -438,50 +438,48 @@ def main(
 
     mlflow.set_tracking_uri(remote_server_uri)
     mlflow.set_experiment(experiment_name)
+    with mlflow.start_run(run_name=run_name):
+        mlflow.pytorch.autolog()
+        # 7- Training the model on the training set
+        torch.cuda.empty_cache()
+        torch.set_float32_matmul_precision("medium")
+        gc.collect()
 
-    mlflow.set_tag("mlflow.runName", run_name)
+        trainer.fit(light_module, train_loader, val_loader)
 
-    mlflow.pytorch.autolog()
-    # 7- Training the model on the training set
-    torch.cuda.empty_cache()
-    torch.set_float32_matmul_precision("medium")
-    gc.collect()
+        best_model = type(light_module).load_from_checkpoint(
+            checkpoint_path=trainer.checkpoint_callback.best_model_path,
+            model=light_module.model,
+            loss=light_module.loss,
+            optimizer=light_module.optimizer,
+            optimizer_params=light_module.optimizer_params,
+            scheduler=light_module.scheduler,
+            scheduler_params=light_module.scheduler_params,
+            scheduler_interval=light_module.scheduler_interval,
+        )
 
-    trainer.fit(light_module, train_loader, val_loader)
+        # Logging the model with the associated code
+        mlflow.pytorch.log_model(
+            artifact_path="model",
+            code_paths=[
+                "src/models/",
+                "src/optim/",
+                "src/config/",
+            ],
+            pytorch_model=best_model.to("cpu"),
+        )
 
-    best_model = type(light_module).load_from_checkpoint(
-        checkpoint_path=trainer.checkpoint_callback.best_model_path,
-        model=light_module.model,
-        loss=light_module.loss,
-        optimizer=light_module.optimizer,
-        optimizer_params=light_module.optimizer_params,
-        scheduler=light_module.scheduler,
-        scheduler_params=light_module.scheduler_params,
-        scheduler_interval=light_module.scheduler_interval,
-    )
+        # Log normalization parameters
+        mlflow.log_params(
+            {
+                "normalization_mean": normalization_mean.tolist(),
+                "normalization_std": normalization_std,
+            }
+        )
+        # TODO: Add signature for inference
 
-    # Logging the model with the associated code
-    mlflow.pytorch.log_model(
-        artifact_path="model",
-        code_paths=[
-            "src/models/",
-            "src/optim/",
-            "src/config/",
-        ],
-        pytorch_model=best_model.to("cpu"),
-    )
-
-    # Log normalization parameters
-    mlflow.log_params(
-        {
-            "normalization_mean": normalization_mean.tolist(),
-            "normalization_std": normalization_std,
-        }
-    )
-    # TODO: Add signature for inference
-
-    # 8- Test
-    trainer.test(dataloaders=[test_loader, golden_loader], ckpt_path="best")
+        # 8- Test
+        trainer.test(dataloaders=[test_loader, golden_loader], ckpt_path="best")
 
 
 def format_datasets(mayotte_2022: bool, martinique_2022: bool) -> Tuple[List[str], List[int]]:
