@@ -19,23 +19,23 @@ spec:
               "MAYOTTE_2022": 1,
               "MARTINIQUE_2022": 0,
               "TILES_SIZE": 250,
-              "AUGMENT_SIZE": 250,
+              "AUGMENT_SIZE": 512,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
-              "EPOCHS": 150,
-              "BATCH_SIZE": 16,
-              "TEST_BATCH_SIZE": 16,
+              "EPOCHS": 50,
+              "BATCH_SIZE": 8,
+              "TEST_BATCH_SIZE": 8,
               "LR": 0.00005,
-              "BUILDING_CLASS_WEIGHT": 2,
+              "BUILDING_CLASS_WEIGHT": 1,
               "LOSS_NAME": "cross_entropy_weighted",
-              "MODULE_NAME": "UNetGaetan",
+              "MODULE_NAME": "DeepLabGaetan",
               "SCHEDULER_NAME": "one_cycle",
               "PATIENCE": 200,
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
               "FREEZE_ENCODER": 0,
               "CUDA": 1,
-              "RUN_NAME": "kikitax"
+              "RUN_NAME": "stagiosessaye"
             }
             ]'
 

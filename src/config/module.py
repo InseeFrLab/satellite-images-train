@@ -8,9 +8,8 @@ from models.components.segmentation_models import (
     SegformerB3,
     SegformerB4,
     SegformerB5,
+    DeepLabV3
 )
-
-from modeles_gaetan import DeepLabV3
 
 module_dict = {
     "deeplabv3": DeepLabv3Module,
