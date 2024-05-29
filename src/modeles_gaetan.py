@@ -93,3 +93,74 @@ class UNet(nn.Module):
         else:
             return self.softmax_layer(logits)
 
+
+
+
+class ASPP(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(ASPP, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        
+        self.conv2 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=6, dilation=6)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        
+        self.conv3 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=12, dilation=12)
+        self.bn3 = nn.BatchNorm2d(out_channels)
+        
+        self.conv4 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=18, dilation=18)
+        self.bn4 = nn.BatchNorm2d(out_channels)
+        
+        self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.conv5 = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
+        self.bn5 = nn.BatchNorm2d(out_channels)
+        
+        self.conv_out = nn.Conv2d(out_channels * 5, out_channels, kernel_size=1, stride=1, padding=0)
+        self.bn_out = nn.BatchNorm2d(out_channels)
+        
+    def forward(self, x):
+        size = x.shape[2:]
+        
+        y1 = F.relu(self.bn1(self.conv1(x)))
+        y2 = F.relu(self.bn2(self.conv2(x)))
+        y3 = F.relu(self.bn3(self.conv3(x)))
+        y4 = F.relu(self.bn4(self.conv4(x)))
+        
+        y5 = self.global_avg_pool(x)
+        y5 = F.relu(self.bn5(self.conv5(y5)))
+        y5 = F.interpolate(y5, size=size, mode='bilinear', align_corners=True)
+        
+        y = torch.cat([y1, y2, y3, y4, y5], dim=1)
+        y = F.relu(self.bn_out(self.conv_out(y)))
+        
+        return y
+
+class DeepLabV3(nn.Module):
+    def __init__(self, n_bands=3, logits=True, freeze_encoder=False):
+        super(DeepLabV3, self).__init__()
+        self.num_classes = 2
+        self.backbone = resnet50(pretrained=False, replace_stride_with_dilation=[False, True, True])
+        self.aspp = ASPP(2048, 256)
+        self.conv1 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(256)
+        self.conv2 = nn.Conv2d(256, self.num_classes, kernel_size=1, stride=1, padding=0)
+        
+    def forward(self, x):
+        size = x.shape[2:]
+        
+        x = self.backbone.conv1(x)
+        x = self.backbone.bn1(x)
+        x = self.backbone.relu(x)
+        x = self.backbone.maxpool(x)
+        
+        x = self.backbone.layer1(x)
+        x = self.backbone.layer2(x)
+        x = self.backbone.layer3(x)
+        x = self.backbone.layer4(x)
+        
+        x = self.aspp(x)
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = self.conv2(x)
+        x = F.interpolate(x, size=size, mode='bilinear', align_corners=True)
+        
+        return x

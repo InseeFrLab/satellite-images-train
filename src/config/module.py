@@ -10,6 +10,8 @@ from models.components.segmentation_models import (
     SegformerB5,
 )
 
+from modeles_gaetan import DeepLabV3
+
 module_dict = {
     "deeplabv3": DeepLabv3Module,
     "single_class_deeplabv3": SingleClassDeepLabv3Module,
@@ -19,5 +21,6 @@ module_dict = {
     "segformer-b3": SegformerB3,
     "segformer-b4": SegformerB4,
     "segformer-b5": SegformerB5,
-    "UNetGaetan": UNet
+    "UNetGaetan": UNet,
+    "DeepLabGaetan" : DeepLabV3
 }
