@@ -22,4 +22,5 @@ module_dict = {
     "segformer-b5": SegformerB5,
     "UNetGaetan": UNet,
     "DeepLabGaetan" : DeepLabV3
+    "ASPP" : ASPP
 }
