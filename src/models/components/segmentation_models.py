@@ -429,3 +429,123 @@ class DeepLabV3(nn.Module):
         x = self.conv2(x)
         x = F.interpolate(x, size=size, mode='bilinear', align_corners=True)
         return x
+
+
+# class PSPNet(nn.Module):
+#     def __init__(self, n_bands=3, logits=True, freeze_encoder=False):
+#         super(PSPNet, self).__init__()
+#         self.backbone = models.resnet34(pretrained=True)
+#         self.feat_channels = 512
+#         self.layer0 = nn.Sequential(self.backbone.conv1,
+#                                     self.backbone.bn1,
+#                                     self.backbone.relu,
+#                                     self.backbone.maxpool)
+#         self.layer1 = self.backbone.layer1
+#         self.layer2 = self.backbone.layer2
+#         self.layer3 = self.backbone.layer3
+#         self.layer4 = self.backbone.layer4
+#         # Pyramid Pooling Module
+#         self.ppm = PyramidPoolingModule(self.feat_channels, [1, 2, 3, 6])
+#         # Final classifier
+#         self.final = nn.Sequential(
+#             nn.Conv2d(self.feat_channels + len(self.ppm.stages) * self.feat_channels, 512, kernel_size=3, padding=1, bias=False),
+#             nn.BatchNorm2d(512),
+#             nn.ReLU(inplace=True),
+#             nn.Dropout(0.1),
+#             nn.Conv2d(512, 1, kernel_size=1)
+#         )
+
+#     def forward(self, x):
+#         x_size = x.size()
+#         # Backbone
+#         x = self.layer0(x)
+#         x = self.layer1(x)
+#         x = self.layer2(x)
+#         x = self.layer3(x)
+#         x = self.layer4(x)
+#         # PPM
+#         x = self.ppm(x)
+#         # Final classifier
+#         x = self.final(x)
+#         return F.interpolate(x, x_size[2:], mode='bilinear', align_corners=False)
+
+
+# class PyramidPoolingModule(nn.Module):
+#     def __init__(self, in_channels, pool_sizes):
+#         super(PyramidPoolingModule, self).__init__()
+#         self.pool_sizes = pool_sizes
+#         self.stages = nn.ModuleList([self._make_stage(in_channels, size) for size in pool_sizes])
+#         self.bottleneck = nn.Conv2d(in_channels * (len(pool_sizes) + 1), in_channels, kernel_size=1, padding=0, bias=False)
+#         self.relu = nn.ReLU(inplace=True)
+
+#     def _make_stage(self, in_channels, size):
+#         prior = nn.AdaptiveAvgPool2d(output_size=(size, size))
+#         conv = nn.Conv2d(in_channels, in_channels // len(self.pool_sizes), kernel_size=1, bias=False)
+#         return nn.Sequential(prior, conv)
+
+#     def forward(self, x):
+#         h, w = x.size(2), x.size(3)
+#         pyramids = [x]
+#         pyramids.extend([F.interpolate(stage(x), size=(h, w), mode='bilinear', align_corners=False) for stage in self.stages])
+#         output = self.bottleneck(torch.cat(pyramids, dim=1))
+#         return self.relu(output)
+
+class PyramidPoolingModule(nn.Module):
+    def __init__(self, in_channels, pool_sizes):
+        super(PyramidPoolingModule, self).__init__()
+        self.stages = nn.ModuleList([self._make_stage(in_channels, in_channels // 4, size) for size in pool_sizes])
+        self.bottleneck = nn.Conv2d(in_channels * 2, in_channels, kernel_size=1, padding=0, bias=False)
+        self.relu = nn.ReLU(inplace=True)
+
+    def _make_stage(self, in_channels, out_channels, size):
+        prior = nn.AdaptiveAvgPool2d(output_size=(size, size))
+        conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
+        return nn.Sequential(prior, conv)
+
+    def forward(self, x):
+        h, w = x.size(2), x.size(3)
+        pyramids = [x]
+        for stage in self.stages:
+            out = F.interpolate(stage(x), size=(h, w), mode='bilinear', align_corners=False)
+            pyramids.append(out)
+            print(f"Stage output shape: {out.shape}")  # Debugging line
+        output = self.bottleneck(torch.cat(pyramids, dim=1))
+        print(f"Concatenated shape: {torch.cat(pyramids, dim=1).shape}")  # Debugging line
+        return self.relu(output)
+
+
+class PSPNet(nn.Module):
+    def __init__(self, n_bands=3, logits=True, freeze_encoder=False):
+        super(PSPNet, self).__init__()
+        self.backbone = models.resnet50(pretrained=True)
+        self.feat_channels = 2048
+
+        self.layer0 = nn.Sequential(self.backbone.conv1,
+                                    self.backbone.bn1,
+                                    self.backbone.relu,
+                                    self.backbone.maxpool)
+        self.layer1 = self.backbone.layer1
+        self.layer2 = self.backbone.layer2
+        self.layer3 = self.backbone.layer3
+        self.layer4 = self.backbone.layer4
+
+        self.ppm = PyramidPoolingModule(self.feat_channels, [1, 2, 3, 6])
+
+        self.final = nn.Sequential(
+            nn.Conv2d(self.feat_channels, 512, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.1),
+            nn.Conv2d(512, 1, kernel_size=1)
+        )
+
+    def forward(self, x):
+        x_size = x.size()
+        x = self.layer0(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.ppm(x)
+        x = self.final(x)
+        return F.interpolate(x, x_size[2:], mode='bilinear', align_corners=False)

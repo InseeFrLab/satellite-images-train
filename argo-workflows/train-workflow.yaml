@@ -16,10 +16,10 @@ spec:
         value: '[
             { "TASK": "segmentation",
               "SOURCE": "PLEIADES",
-              "MAYOTTE_2022": 1,
-              "MARTINIQUE_2022": 0,
+              "MAYOTTE_2022": 0,
+              "MARTINIQUE_2022": 1,
               "TILES_SIZE": 250,
-              "AUGMENT_SIZE": 512,
+              "AUGMENT_SIZE": 250,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
               "EPOCHS": 50,
@@ -28,14 +28,14 @@ spec:
               "LR": 0.00005,
               "BUILDING_CLASS_WEIGHT": 1,
               "LOSS_NAME": "cross_entropy_weighted",
-              "MODULE_NAME": "DeepLabGaetan",
+              "MODULE_NAME": "PSPNet",
               "SCHEDULER_NAME": "one_cycle",
               "PATIENCE": 200,
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
               "FREEZE_ENCODER": 0,
               "CUDA": 1,
-              "RUN_NAME": "stagiosessaye"
+              "RUN_NAME": "stagiosessayeencore"
             }
             ]'
 

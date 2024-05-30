@@ -8,7 +8,9 @@ from models.components.segmentation_models import (
     SegformerB3,
     SegformerB4,
     SegformerB5,
-    DeepLabV3
+    DeepLabV3,
+    ASPP,
+    PSPNet
 )
 
 module_dict = {
@@ -21,6 +23,7 @@ module_dict = {
     "segformer-b4": SegformerB4,
     "segformer-b5": SegformerB5,
     "UNetGaetan": UNet,
-    "DeepLabGaetan" : DeepLabV3
-    "ASPP" : ASPP
+    "DeepLabGaetan" : DeepLabV3,
+    "ASPP" : ASPP,
+    "PSPNet" : PSPNet
 }
