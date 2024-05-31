@@ -168,7 +168,9 @@ parser.add_argument(
         "segformer-b3",
         "segformer-b4",
         "segformer-b5",
-        "UNetGaetan"
+        "UNetGaetan",
+        "PSPNet",
+        "DeepLabV3"
     ],
     default="deeplabv3",
     help="Model used as based model",
