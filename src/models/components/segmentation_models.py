@@ -536,7 +536,7 @@ class PSPNet(nn.Module):
             nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
             nn.Dropout(0.1),
-            nn.Conv2d(512, 1, kernel_size=1)
+            nn.Conv2d(512, 2, kernel_size=1)
         )
 
     def forward(self, x):
