@@ -528,6 +528,7 @@ class PSPNet(nn.Module):
         self.layer2 = self.backbone.layer2
         self.layer3 = self.backbone.layer3
         self.layer4 = self.backbone.layer4
+        self.logits = logits 
 
         self.ppm = PyramidPoolingModule(self.feat_channels, [1, 2, 3, 6])
 
