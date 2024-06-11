@@ -150,7 +150,7 @@ spec:
                   -P remote_server_uri=$MLFLOW_TRACKING_URI \
                   -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
                   -P source={{inputs.parameters.SOURCE}} \
-                  -P datasets={{inputs.parameters.DATASETS}} \
+                  -P datasets='{{inputs.parameters.DATASETS}}' \
                   -P type_labeler={{inputs.parameters.TYPE_LABELER}} \
                   -P task={{inputs.parameters.TASK}} \
                   -P tiles_size={{inputs.parameters.TILES_SIZE}} \
