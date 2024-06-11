@@ -1,12 +1,13 @@
 """
 Main script.
 """
-from typing import List, Tuple
+from typing import Tuple
 import argparse
 import gc
 import os
 import numpy as np
 import random
+import ast
 
 import albumentations as A
 import mlflow
@@ -17,6 +18,7 @@ from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
 from functions.download_data import (
+    get_file_system,
     get_patchs_labels,
     normalization_params,
     get_golden_paths,
@@ -66,19 +68,10 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
-    "--mayotte_2022",
-    type=int,
-    choices=[0, 1],
-    default=1,
-    help="1 if Mayotte 2022 dataset is used, 0 otherwise",
-    required=True,
-)
-parser.add_argument(
-    "--martinique_2022",
-    type=int,
-    choices=[0, 1],
-    default=0,
-    help="1 if Martinique 2022 dataset is used, 0 otherwise",
+    "--datasets",
+    type=str,
+    default="['mayotte_2019', 'mayotte_2020', 'mayotte_2021']",
+    help="List of datasets to be used for training",
     required=True,
 )
 parser.add_argument(
@@ -255,8 +248,8 @@ def main(
     run_name: str,
     task: str,
     source: str,
-    deps: List[str],
-    years: List[str],
+    deps: Tuple[str],
+    years: Tuple[str],
     tiles_size: int,
     augment_size: int,
     type_labeler: str,
@@ -312,6 +305,8 @@ def main(
     normalization_stds = []
     weights = []
     for dep, year in zip(deps, years):
+
+        return f"coucou, well done bg: {dep} {year}"
         # Get patchs and labels for training
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
@@ -481,35 +476,33 @@ def main(
         trainer.test(dataloaders=[test_loader, golden_loader], ckpt_path="best")
 
 
-def format_datasets(mayotte_2022: bool, martinique_2022: bool) -> Tuple[List[str], List[int]]:
+def format_datasets(args_dict: dict) -> Tuple[str, int]:
     """
     Format datasets.
 
     Args:
-        mayotte_2022 (bool): True if Mayotte 2022 dataset is used, False otherwise.
-        martinique_2022 (bool): True if Martinique 2022 dataset is used, False otherwise.
+        args_dict (dict): A dictionary containing the command-line arguments.
+
     Returns:
-        Tuple[List[str], List[int]]: List of departments and years.
+        Tuple[str, int]: A tuple containing the list of departments and years extracted from the dataset names.
+
+    Raises:
+        ValueError: If the S3 path does not exist.
+
     """
-    deps = []
-    years = []
-    if mayotte_2022:
-        deps.append("MAYOTTE_CLEAN")
-        years.append(2022)
-    if martinique_2022:
-        deps.append("MARTINIQUE")
-        years.append(2022)
+    datasets = ast.literal_eval(args_dict["datasets"])
+    deps, years = zip(*[item.split('_') for item in datasets])
+    fs = get_file_system()
+    for dep, year in zip(deps, years):
+        s3_path = f"s3://projet-slums-detection/data-raw/{args_dict['source']}/{dep.upper()}/{year}"
+        if not fs.exists(s3_path):
+            raise ValueError(f"S3 path {s3_path} does not exist.")
     return deps, years
 
 
 # Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training
-# Dans le prepro check si habitation ou non et mettre dans le nom du fichier
 
 if __name__ == "__main__":
     args_dict = vars(args)
-    datasets = {
-        "mayotte_2022": args_dict.pop("mayotte_2022"),
-        "martinique_2022": args_dict.pop("martinique_2022"),
-    }
-    deps, years = format_datasets(**datasets)
+    deps, years = format_datasets(args_dict)
     main(**args_dict, deps=deps, years=years)
