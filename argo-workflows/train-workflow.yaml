@@ -15,8 +15,7 @@ spec:
         value: '[
             { "TASK": "segmentation",
               "SOURCE": "PLEIADES",
-              "MAYOTTE_2022": 1,
-              "MARTINIQUE_2022": 0,
+              "DATASETS": """["MAYOTTE_2022", "MARTINIQUE_2022"]""",
               "TILES_SIZE": 250,
               "AUGMENT_SIZE": 512,
               "TYPE_LABELER": "BDTOPO",
@@ -53,10 +52,8 @@ spec:
               parameters:
                 - name: SOURCE
                   value: "{{item.SOURCE}}"
-                - name: MAYOTTE_2022
-                  value: "{{item.MAYOTTE_2022}}"
-                - name: MARTINIQUE_2022
-                  value: "{{item.MARTINIQUE_2022}}"
+                - name: DATASETS
+                  value: "{{item.DATASETS}}"
                 - name: TYPE_LABELER
                   value: "{{item.TYPE_LABELER}}"
                 - name: TASK
@@ -111,8 +108,7 @@ spec:
       inputs:
         parameters:
           - name: SOURCE
-          - name: MAYOTTE_2022
-          - name: MARTINIQUE_2022
+          - name: DATASETS
           - name: TYPE_LABELER
           - name: TASK
           - name: TILES_SIZE
@@ -154,8 +150,7 @@ spec:
                   -P remote_server_uri=$MLFLOW_TRACKING_URI \
                   -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
                   -P source={{inputs.parameters.SOURCE}} \
-                  -P mayotte_2022={{inputs.parameters.MAYOTTE_2022}} \
-                  -P martinique_2022={{inputs.parameters.MARTINIQUE_2022}} \
+                  -P datasets='{{inputs.parameters.DATASETS}}' \
                   -P type_labeler={{inputs.parameters.TYPE_LABELER}} \
                   -P task={{inputs.parameters.TASK}} \
                   -P tiles_size={{inputs.parameters.TILES_SIZE}} \

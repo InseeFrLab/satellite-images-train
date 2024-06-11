@@ -8,8 +8,7 @@ ENTRY_POINT=main
 TASK=segmentation
 
 SOURCE=PLEIADES
-MAYOTTE_2022=1
-MARTINIQUE_2022=1
+DATASETS='["mayotte_2022", "martinique_2022"]'
 TILES_SIZE=250
 TYPE_LABELER=BDTOPO
 USE_S3=0
@@ -24,7 +23,7 @@ LOSS_NAME=bce_logits_weighted
 MODULE_NAME=single_class_deeplabv3
 LABEL_SMOOTHING=0.0
 LOGITS=1
-CUDA=1
+CUDA=0
 
 mlflow run ~/work/satellite-images-train/ \
     --env-manager=local \
@@ -32,8 +31,7 @@ mlflow run ~/work/satellite-images-train/ \
     -P remote_server_uri=$MLFLOW_TRACKING_URI \
     -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
     -P source=$SOURCE \
-    -P mayotte_2022=$MAYOTTE_2022 \
-    -P martinique_2022=$MARTINIQUE_2022 \
+    -P datasets="$DATASETS" \
     -P type_labeler=$TYPE_LABELER \
     -P task=$TASK \
     -P tiles_size=$TILES_SIZE \
