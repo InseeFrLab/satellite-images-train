@@ -29,7 +29,13 @@ from functions.filter import filter_indices_from_labels
 
 gdal.UseExceptions()
 
+
 # Command-line arguments
+def str_to_list(arg):
+    # Convert the argument string to a list
+    return ast.literal_eval(arg)
+
+
 parser = argparse.ArgumentParser(description="PyTorch Training Satellite Images")
 parser.add_argument(
     "--remote_server_uri",
@@ -69,7 +75,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--datasets",
-    type=str,
+    type=str_to_list,
     default="['mayotte_2019', 'mayotte_2020', 'mayotte_2021']",
     help="List of datasets to be used for training",
     required=True,
@@ -305,8 +311,6 @@ def main(
     normalization_stds = []
     weights = []
     for dep, year in zip(deps, years):
-
-        return f"coucou, well done bg: {dep} {year}"
         # Get patchs and labels for training
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
@@ -490,19 +494,19 @@ def format_datasets(args_dict: dict) -> Tuple[str, int]:
         ValueError: If the S3 path does not exist.
 
     """
-    datasets = ast.literal_eval(args_dict["datasets"])
-    deps, years = zip(*[item.split('_') for item in datasets])
+    deps, years = zip(*[item.split('_') for item in args_dict["datasets"]])
     fs = get_file_system()
     for dep, year in zip(deps, years):
         s3_path = f"s3://projet-slums-detection/data-raw/{args_dict['source']}/{dep.upper()}/{year}"
         if not fs.exists(s3_path):
             raise ValueError(f"S3 path {s3_path} does not exist.")
-    return deps, years
+    args_dict.pop("datasets")
+    return deps, years, args_dict
 
 
 # Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training
 
 if __name__ == "__main__":
     args_dict = vars(args)
-    deps, years = format_datasets(args_dict)
+    deps, years, args_dict = format_datasets(args_dict)
     main(**args_dict, deps=deps, years=years)
