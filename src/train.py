@@ -495,6 +495,7 @@ def format_datasets(args_dict: dict) -> Tuple[str, int]:
 
     """
     deps, years = zip(*[item.split('_') for item in args_dict["datasets"]])
+    deps = [dep.upper() for dep in deps]
     fs = get_file_system()
     for dep, year in zip(deps, years):
         s3_path = f"s3://projet-slums-detection/data-raw/{args_dict['source']}/{dep.upper()}/{year}"

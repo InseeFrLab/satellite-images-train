@@ -8,7 +8,7 @@ ENTRY_POINT=main
 TASK=segmentation
 
 SOURCE=PLEIADES
-DATASETS="""["MAYOTTE_2022", "MARTINIQUE_2022"]"""
+DATASETS='["mayotte_2022", "martinique_2022"]'
 TILES_SIZE=250
 TYPE_LABELER=BDTOPO
 USE_S3=0
@@ -31,7 +31,7 @@ mlflow run ~/work/satellite-images-train/ \
     -P remote_server_uri=$MLFLOW_TRACKING_URI \
     -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
     -P source=$SOURCE \
-    -P datasets=$DATASETS \
+    -P datasets="$DATASETS" \
     -P type_labeler=$TYPE_LABELER \
     -P task=$TASK \
     -P tiles_size=$TILES_SIZE \
