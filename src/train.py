@@ -513,6 +513,4 @@ if __name__ == "__main__":
     args_dict = vars(args)
     deps, years, args_dict = format_datasets(args_dict)
     run_id = main(**args_dict, deps=deps, years=years)
-    with open("run_id.txt", "w") as file:
-        file.write(run_id)
-
+    print(run_id)
