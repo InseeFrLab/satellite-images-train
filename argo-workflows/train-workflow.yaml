@@ -3,6 +3,7 @@ kind: Workflow
 metadata:
   generateName: parallel-training-
 spec:
+  serviceAccountName: workflow
   volumes:
     - name: dshm
       emptyDir:
@@ -90,7 +91,6 @@ spec:
                   value: "{{item.FREEZE_ENCODER}}"
                 - name: CUDA
                   value: "{{item.CUDA}}"
-
             # Pass the inputs to the task using "withParam"
             withParam: "{{workflow.parameters.training-conf-list}}"
 
@@ -143,6 +143,7 @@ spec:
         command: ["/bin/bash", -c]
         args: ["git clone https://github.com/InseeFrLab/satellite-images-train.git &&
               cd satellite-images-train/ &&
+              git checkout test-totoo &&
               export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT &&
               mlflow run ~/work/satellite-images-train/ \
                   --env-manager=local \
