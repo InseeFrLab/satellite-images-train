@@ -315,7 +315,6 @@ def main(
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
         )
-
         patches.sort()
         labels.sort()
         # No filtering here
@@ -333,6 +332,7 @@ def main(
         test_patches += list(patches)
         test_labels += list(labels)
 
+
         # Get normalization parameters
         normalization_mean, normalization_std = normalization_params(
             task, source, dep, year, tiles_size, type_labeler
@@ -345,9 +345,9 @@ def main(
     golden_patches, golden_labels = get_golden_paths(
         from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
     )
-
     golden_patches.sort()
     golden_labels.sort()
+
 
     # 2- Define the transforms to apply
     # Normalization mean
@@ -388,6 +388,11 @@ def main(
     if augment_size != tiles_size:
         test_transform_list.insert(0, A.Resize(augment_size, augment_size))
     test_transform = A.Compose(test_transform_list)
+
+    # train_patches = train_patches[:100]
+    # train_labels = train_labels[:100]
+    # test_patches = test_patches[:100]
+    # test_labels = test_labels[:100]
 
     # 3- Retrieve the Dataset object given the params
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
@@ -436,7 +441,7 @@ def main(
 
     mlflow.set_tracking_uri(remote_server_uri)
     mlflow.set_experiment(experiment_name)
-    with mlflow.start_run(run_name=run_name):
+    with mlflow.start_run(run_name=run_name) as run:
         mlflow.pytorch.autolog()
         # 7- Training the model on the training set
         torch.cuda.empty_cache()
@@ -467,6 +472,7 @@ def main(
             pytorch_model=best_model.to("cpu"),
         )
 
+
         # Log normalization parameters
         mlflow.log_params(
             {
@@ -478,6 +484,8 @@ def main(
 
         # 8- Test
         trainer.test(dataloaders=[test_loader, golden_loader], ckpt_path="best")
+        run_id = run.info.run_id
+        return run_id
 
 
 def format_datasets(args_dict: dict) -> Tuple[str, int]:
@@ -510,4 +518,5 @@ def format_datasets(args_dict: dict) -> Tuple[str, int]:
 if __name__ == "__main__":
     args_dict = vars(args)
     deps, years, args_dict = format_datasets(args_dict)
-    main(**args_dict, deps=deps, years=years)
+    run_id = main(**args_dict, deps=deps, years=years)
+    print(run_id)

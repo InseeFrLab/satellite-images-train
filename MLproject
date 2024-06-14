@@ -61,4 +61,4 @@ entry_points:
             --cuda {cuda} \
             --label_smoothing {label_smoothing} \
             --building_class_weight {building_class_weight} \
-            --from_s3 {from_s3}
+            --from_s3 {from_s3} | tail -n 1 > /home/onyxia/run-id.txt

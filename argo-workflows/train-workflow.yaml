@@ -3,6 +3,7 @@ kind: Workflow
 metadata:
   generateName: parallel-training-
 spec:
+  serviceAccountName: workflow
   volumes:
     - name: dshm
       emptyDir:
@@ -15,12 +16,12 @@ spec:
         value: '[
             { "TASK": "segmentation",
               "SOURCE": "PLEIADES",
-              "DATASETS": """["MAYOTTE_2022", "MARTINIQUE_2022"]""",
+              "DATASETS": ["MAYOTTE_2022"],
               "TILES_SIZE": 250,
               "AUGMENT_SIZE": 512,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
-              "EPOCHS": 150,
+              "EPOCHS": 2,
               "BATCH_SIZE": 16,
               "TEST_BATCH_SIZE": 16,
               "LR": 0.00005,
@@ -90,7 +91,6 @@ spec:
                   value: "{{item.FREEZE_ENCODER}}"
                 - name: CUDA
                   value: "{{item.CUDA}}"
-
             # Pass the inputs to the task using "withParam"
             withParam: "{{workflow.parameters.training-conf-list}}"
 
@@ -141,35 +141,36 @@ spec:
             cpu: 50
             nvidia.com/gpu: 1
         command: ["/bin/bash", -c]
-        args: ["git clone https://github.com/InseeFrLab/satellite-images-train.git &&
-              cd satellite-images-train/ &&
-              export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT &&
-              mlflow run ~/work/satellite-images-train/ \
-                  --env-manager=local \
-                  --entry-point $ENTRY_POINT \
-                  -P remote_server_uri=$MLFLOW_TRACKING_URI \
-                  -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
-                  -P source={{inputs.parameters.SOURCE}} \
-                  -P datasets='{{inputs.parameters.DATASETS}}' \
-                  -P type_labeler={{inputs.parameters.TYPE_LABELER}} \
-                  -P task={{inputs.parameters.TASK}} \
-                  -P tiles_size={{inputs.parameters.TILES_SIZE}} \
-                  -P augment_size={{inputs.parameters.AUGMENT_SIZE}} \
-                  -P epochs={{inputs.parameters.EPOCHS}} \
-                  -P batch_size={{inputs.parameters.BATCH_SIZE}} \
-                  -P test_batch_size={{inputs.parameters.TEST_BATCH_SIZE}} \
-                  -P lr={{inputs.parameters.LR}} \
-                  -P from_s3={{inputs.parameters.USE_S3}} \
-                  -P loss_name={{inputs.parameters.LOSS_NAME}} \
-                  -P module_name={{inputs.parameters.MODULE_NAME}} \
-                  -P label_smoothing={{inputs.parameters.LABEL_SMOOTHING}} \
-                  -P scheduler_name={{inputs.parameters.SCHEDULER_NAME}} \
-                  -P patience={{inputs.parameters.PATIENCE}} \
-                  -P logits={{inputs.parameters.LOGITS}} \
-                  -P freeze_encoder={{inputs.parameters.FREEZE_ENCODER}} \
-                  -P building_class_weight={{inputs.parameters.BUILDING_CLASS_WEIGHT}} \
-                  -P cuda={{inputs.parameters.CUDA}}"
-              ]
+        args:
+          - |
+            git clone https://github.com/InseeFrLab/satellite-images-train.git &&
+            cd satellite-images-train/ &&
+            export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT &&
+            mlflow run ~/work/satellite-images-train/ \
+                --env-manager=local \
+                --entry-point $ENTRY_POINT \
+                -P remote_server_uri=$MLFLOW_TRACKING_URI \
+                -P experiment_name=$MLFLOW_EXPERIMENT_NAME \
+                -P source={{inputs.parameters.SOURCE}} \
+                -P datasets='{{inputs.parameters.DATASETS}}' \
+                -P type_labeler={{inputs.parameters.TYPE_LABELER}} \
+                -P task={{inputs.parameters.TASK}} \
+                -P tiles_size={{inputs.parameters.TILES_SIZE}} \
+                -P augment_size={{inputs.parameters.AUGMENT_SIZE}} \
+                -P epochs={{inputs.parameters.EPOCHS}} \
+                -P batch_size={{inputs.parameters.BATCH_SIZE}} \
+                -P test_batch_size={{inputs.parameters.TEST_BATCH_SIZE}} \
+                -P lr={{inputs.parameters.LR}} \
+                -P from_s3={{inputs.parameters.USE_S3}} \
+                -P loss_name={{inputs.parameters.LOSS_NAME}} \
+                -P module_name={{inputs.parameters.MODULE_NAME}} \
+                -P label_smoothing={{inputs.parameters.LABEL_SMOOTHING}} \
+                -P scheduler_name={{inputs.parameters.SCHEDULER_NAME}} \
+                -P patience={{inputs.parameters.PATIENCE}} \
+                -P logits={{inputs.parameters.LOGITS}} \
+                -P freeze_encoder={{inputs.parameters.FREEZE_ENCODER}} \
+                -P building_class_weight={{inputs.parameters.BUILDING_CLASS_WEIGHT}} \
+                -P cuda={{inputs.parameters.CUDA}}
         volumeMounts:
           - mountPath: /dev/shm
             name: dshm
