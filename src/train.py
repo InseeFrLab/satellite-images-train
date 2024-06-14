@@ -315,13 +315,16 @@ def main(
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
         )
-
+        print("ICI")
         patches.sort()
         labels.sort()
         # No filtering here
         indices = filter_indices_from_labels(labels, -1.0, 2.0)
         train_patches += [patches[idx] for idx in indices]
         train_labels += [labels[idx] for idx in indices]
+
+        train_patches = train_patches[:30]
+        train_labels = train_labels[:30]
 
         # Get patches and labels for test
         patches, labels = get_patchs_labels(
@@ -332,6 +335,10 @@ def main(
         labels.sort()
         test_patches += list(patches)
         test_labels += list(labels)
+
+        test_patches = test_patches[:30]
+        test_labels = test_labels[:30]
+        print("ICI")
 
         # Get normalization parameters
         normalization_mean, normalization_std = normalization_params(
@@ -345,10 +352,13 @@ def main(
     golden_patches, golden_labels = get_golden_paths(
         from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
     )
-
+    print("ICI")
     golden_patches.sort()
     golden_labels.sort()
 
+    golden_patches = golden_patches[:30]
+    golden_labels = golden_labels[:30]
+    
     # 2- Define the transforms to apply
     # Normalization mean
     normalization_mean = np.average(
@@ -362,6 +372,7 @@ def main(
         )
         for i in range(n_bands)
     ]
+    print("ICI")
 
     transform_list = [
         A.HorizontalFlip(),
@@ -388,14 +399,16 @@ def main(
     if augment_size != tiles_size:
         test_transform_list.insert(0, A.Resize(augment_size, augment_size))
     test_transform = A.Compose(test_transform_list)
+    print("ICI")
 
     # 3- Retrieve the Dataset object given the params
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
-    dataset = get_dataset(task, train_patches[:30], train_labels[:30], n_bands, from_s3, transform)
-    test_dataset = get_dataset(task, test_patches[:30], test_labels[:30], n_bands, from_s3, test_transform)
+    dataset = get_dataset(task, train_patches, train_labels, n_bands, from_s3, transform)
+    test_dataset = get_dataset(task, test_patches, test_labels, n_bands, from_s3, test_transform)
     golden_dataset = get_dataset(
-        task, golden_patches[:30], golden_labels[:30], n_bands, from_s3, test_transform
+        task, golden_patches, golden_labels, n_bands, from_s3, test_transform
     )
+    print("ICI")
 
     # 4- Use random_split to split the dataset
     train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
@@ -413,9 +426,11 @@ def main(
     golden_loader = DataLoader(
         golden_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
     )
+    print("ICI")
 
     # 6- Create the trainer and the lightning
     trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)
+    print("ICI")
 
     light_module = get_lightning_module(
         module_name=module_name,
@@ -442,6 +457,7 @@ def main(
         torch.cuda.empty_cache()
         torch.set_float32_matmul_precision("medium")
         gc.collect()
+        print("ICI")
 
         trainer.fit(light_module, train_loader, val_loader)
 
@@ -466,6 +482,7 @@ def main(
             ],
             pytorch_model=best_model.to("cpu"),
         )
+        print("ICI")
 
         # Log normalization parameters
         mlflow.log_params(
