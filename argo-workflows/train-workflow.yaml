@@ -16,26 +16,26 @@ spec:
         value: '[
             { "TASK": "segmentation",
               "SOURCE": "PLEIADES",
-              "MAYOTTE_2022": 0,
-              "MARTINIQUE_2022": 1,
+              "MAYOTTE_2022": 1,
+              "MARTINIQUE_2022": 0,
               "TILES_SIZE": 250,
               "AUGMENT_SIZE": 250,
               "TYPE_LABELER": "BDTOPO",
               "USE_S3": 0,
               "EPOCHS": 50,
-              "BATCH_SIZE": 8,
-              "TEST_BATCH_SIZE": 8,
+              "BATCH_SIZE": 32,
+              "TEST_BATCH_SIZE": 32,
               "LR": 0.00005,
-              "BUILDING_CLASS_WEIGHT": 1,
+              "BUILDING_CLASS_WEIGHT": 3,
               "LOSS_NAME": "cross_entropy_weighted",
               "MODULE_NAME": "PSPNet",
               "SCHEDULER_NAME": "one_cycle",
-              "PATIENCE": 200,
+              "PATIENCE": 4,
               "LABEL_SMOOTHING": 0.0,
               "LOGITS": 1,
               "FREEZE_ENCODER": 0,
               "CUDA": 1,
-              "RUN_NAME": "stagiosessayeencore"
+              "RUN_NAME": "dino_de_la_mangrove"
             }
             ]'
 
@@ -136,13 +136,15 @@ spec:
           - name: LOGITS
           - name: FREEZE_ENCODER
           - name: CUDA
+      nodeSelector:
+        nvidia.com/gpu.product: "NVIDIA-H100-PCIe"
       container:
         image: inseefrlab/satellite-images-train:v0.0.6
         imagePullPolicy: Always
         resources:
           requests:
-            memory: 64Gi
-            cpu: 40
+            memory: 20Gi
+            cpu: 2
           limits:
             memory: 128Gi
             cpu: 50

@@ -10,6 +10,8 @@ from transformers import (
 )
 import torch.nn.functional as F
 import torchvision.models as models
+from torchvision.models.segmentation import deeplabv3_resnet50
+
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -24,14 +26,27 @@ class ConvBlock(nn.Module):
         return x
 
 
+class AttentionBlock(nn.Module):
+    def __init__(self, in_channels):
+        super(AttentionBlock, self).__init__()
+        self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=1)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        attention = self.sigmoid(self.conv(x))
+        return x * attention
+
+
 class EncoderBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(EncoderBlock, self).__init__()
         self.conv_block = ConvBlock(in_channels, out_channels)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.attention = AttentionBlock(out_channels)
 
     def forward(self, x):
         x = self.conv_block(x)
+        x = self.attention(x)
         p = self.pool(x)
         return x, p
 
@@ -41,8 +56,9 @@ class DecoderBlock(nn.Module):
         super(DecoderBlock, self).__init__()
         self.upconv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
         self.conv_block = ConvBlock(in_channels, out_channels)
+        self.attention = AttentionBlock(out_channels)
 
-    def forward(self, x, skip_features): 
+    def forward(self, x, skip_features):
         x = self.upconv(x)
         diffY = skip_features.size()[2] - x.size()[2]
         diffX = skip_features.size()[3] - x.size()[3]
@@ -51,6 +67,7 @@ class DecoderBlock(nn.Module):
 
         x = torch.cat((x, skip_features), dim=1)
         x = self.conv_block(x)
+        x = self.attention(x)
         return x
 
 
@@ -92,6 +109,7 @@ class UNet(nn.Module):
             return logits
         else:
             return self.softmax_layer(logits)
+
 
 class DeepLabv3Module(nn.Module):
     """
@@ -373,6 +391,99 @@ class SegformerB5(SemanticSegmentationSegformer):
         return model
 
 
+class SEBlock(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super(SEBlock, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Linear(channel, channel // reduction, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channel // reduction, channel, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y.expand_as(x)
+
+class SemanticSegmentationSegformerV2(SegformerPreTrainedModel):
+    def __init__(self, config, logits: bool = True):
+        super().__init__(config)
+        self.segformer = SegformerModel(config)
+        self.decode_head = SegformerDecodeHead(config)
+        self.logits = logits
+
+        # Adding SE blocks
+        self.se_blocks = nn.ModuleList([SEBlock(channel) for channel in config.hidden_sizes])
+
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    def freeze(self):
+        """
+        Freeze encoder parameters.
+        """
+        for param in self.segformer.parameters():
+            param.requires_grad = False
+
+    def unfreeze(self):
+        """
+        Unfreeze encoder parameters.
+        """
+        for param in self.segformer.parameters():
+            param.requires_grad = True
+
+    def forward(
+        self,
+        pixel_values: torch.FloatTensor,
+        labels: Optional[torch.LongTensor] = None,
+    ) -> torch.Tensor:
+        """
+        Forward method.
+        """
+        outputs = self.segformer(
+            pixel_values,
+            output_attentions=False,
+            output_hidden_states=True,  # we need the intermediate hidden states
+            return_dict=True,
+        )
+        encoder_hidden_states = outputs.hidden_states
+
+        # Apply SE blocks to the hidden states
+        enhanced_hidden_states = [se_block(hidden_state) for se_block, hidden_state in zip(self.se_blocks, encoder_hidden_states)]
+        
+        logits = self.decode_head(enhanced_hidden_states)
+
+        # Upsample logits to the original image size
+        logits = nn.functional.interpolate(
+            logits, size=pixel_values.shape[-2:], mode="bilinear", align_corners=False
+        )
+
+        if labels is not None:
+            return logits
+        else:
+            return logits
+
+class SegformerB5V2(SemanticSegmentationSegformerV2):
+    """
+    SegformerB5V2 model.
+    """
+
+    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+        model = SemanticSegmentationSegformerV2.from_pretrained(
+            "nvidia/mit-b5",
+            num_labels=2,
+            id2label={0: "background", 1: "building"},
+            label2id={"background": 0, "building": 1},
+        )
+        if freeze_encoder:
+            model.freeze()
+        return model
+
+
+
 class ASPP(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(ASPP, self).__init__()
@@ -430,65 +541,6 @@ class DeepLabV3(nn.Module):
         x = F.interpolate(x, size=size, mode='bilinear', align_corners=True)
         return x
 
-
-# class PSPNet(nn.Module):
-#     def __init__(self, n_bands=3, logits=True, freeze_encoder=False):
-#         super(PSPNet, self).__init__()
-#         self.backbone = models.resnet34(pretrained=True)
-#         self.feat_channels = 512
-#         self.layer0 = nn.Sequential(self.backbone.conv1,
-#                                     self.backbone.bn1,
-#                                     self.backbone.relu,
-#                                     self.backbone.maxpool)
-#         self.layer1 = self.backbone.layer1
-#         self.layer2 = self.backbone.layer2
-#         self.layer3 = self.backbone.layer3
-#         self.layer4 = self.backbone.layer4
-#         # Pyramid Pooling Module
-#         self.ppm = PyramidPoolingModule(self.feat_channels, [1, 2, 3, 6])
-#         # Final classifier
-#         self.final = nn.Sequential(
-#             nn.Conv2d(self.feat_channels + len(self.ppm.stages) * self.feat_channels, 512, kernel_size=3, padding=1, bias=False),
-#             nn.BatchNorm2d(512),
-#             nn.ReLU(inplace=True),
-#             nn.Dropout(0.1),
-#             nn.Conv2d(512, 1, kernel_size=1)
-#         )
-
-#     def forward(self, x):
-#         x_size = x.size()
-#         # Backbone
-#         x = self.layer0(x)
-#         x = self.layer1(x)
-#         x = self.layer2(x)
-#         x = self.layer3(x)
-#         x = self.layer4(x)
-#         # PPM
-#         x = self.ppm(x)
-#         # Final classifier
-#         x = self.final(x)
-#         return F.interpolate(x, x_size[2:], mode='bilinear', align_corners=False)
-
-
-# class PyramidPoolingModule(nn.Module):
-#     def __init__(self, in_channels, pool_sizes):
-#         super(PyramidPoolingModule, self).__init__()
-#         self.pool_sizes = pool_sizes
-#         self.stages = nn.ModuleList([self._make_stage(in_channels, size) for size in pool_sizes])
-#         self.bottleneck = nn.Conv2d(in_channels * (len(pool_sizes) + 1), in_channels, kernel_size=1, padding=0, bias=False)
-#         self.relu = nn.ReLU(inplace=True)
-
-#     def _make_stage(self, in_channels, size):
-#         prior = nn.AdaptiveAvgPool2d(output_size=(size, size))
-#         conv = nn.Conv2d(in_channels, in_channels // len(self.pool_sizes), kernel_size=1, bias=False)
-#         return nn.Sequential(prior, conv)
-
-#     def forward(self, x):
-#         h, w = x.size(2), x.size(3)
-#         pyramids = [x]
-#         pyramids.extend([F.interpolate(stage(x), size=(h, w), mode='bilinear', align_corners=False) for stage in self.stages])
-#         output = self.bottleneck(torch.cat(pyramids, dim=1))
-#         return self.relu(output)
 
 class PyramidPoolingModule(nn.Module):
     def __init__(self, in_channels, pool_sizes):
@@ -550,3 +602,68 @@ class PSPNet(nn.Module):
         x = self.ppm(x)
         x = self.final(x)
         return F.interpolate(x, x_size[2:], mode='bilinear', align_corners=False)
+
+
+class AttentionOCR(nn.Module):
+    def __init__(self, in_channels):
+        super(AttentionOCR, self).__init__()
+        self.in_channels = in_channels
+        self.conv1 = nn.Conv2d(in_channels, in_channels // 8, 1)
+        self.conv2 = nn.Conv2d(in_channels, in_channels // 8, 1)
+        self.conv3 = nn.Conv2d(in_channels, in_channels, 1)
+        self.gamma = nn.Parameter(torch.zeros(1))
+
+    def forward(self, x):
+        batch_size, C, width, height = x.size()
+        proj_query = self.conv1(x).view(batch_size, -1, width * height).permute(0, 2, 1)
+        proj_key = self.conv2(x).view(batch_size, -1, width * height)
+        energy = torch.bmm(proj_query, proj_key)
+        attention = F.softmax(energy, dim=-1)
+        proj_value = self.conv3(x).view(batch_size, -1, width * height)
+
+        out = torch.bmm(proj_value, attention.permute(0, 2, 1))
+        out = out.view(batch_size, C, width, height)
+        out = self.gamma * out + x
+        return out
+
+
+class OCRModule(nn.Module):
+    def __init__(self, num_classes, in_channels=2048):
+        super(OCRModule, self).__init__()
+        self.attention = AttentionOCR(in_channels)
+        self.conv = nn.Conv2d(in_channels, num_classes, 1)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        x = self.attention(x)
+        x = self.conv(x)
+        x = self.softmax(x)
+        return x
+
+
+class DeepLabV3PlusOCR(nn.Module):
+    def __init__(self, n_bands=3, logits=True, freeze_encoder=False):
+        super(DeepLabV3PlusOCR, self).__init__()
+        num_classes = 2  # Fixed number of classes
+        self.logits = logits
+        self.deeplab = deeplabv3_resnet50(pretrained=True, progress=True)
+        
+        # Modify the input layer to accommodate the number of bands
+        if n_bands != 3:
+            self.deeplab.backbone.conv1 = nn.Conv2d(n_bands, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        
+        # Freeze encoder if specified
+        if freeze_encoder:
+            for param in self.deeplab.backbone.parameters():
+                param.requires_grad = False
+
+        self.deeplab.classifier[4] = nn.Conv2d(256, 2048, kernel_size=1)
+        self.ocr = OCRModule(num_classes=num_classes, in_channels=2048)
+
+    def forward(self, x):
+        input_size = x.size()[2:]  # Save the original input size
+        x = self.deeplab.backbone(x)['out']
+        x = self.deeplab.classifier(x)
+        x = self.ocr(x)
+        x = F.interpolate(x, size=input_size, mode='bilinear', align_corners=False)  # Resize output to input size
+        return x

@@ -10,7 +10,9 @@ from models.components.segmentation_models import (
     SegformerB5,
     DeepLabV3,
     ASPP,
-    PSPNet
+    PSPNet,
+    SegformerB5V2,
+    DeepLabV3PlusOCR
 )
 
 module_dict = {
@@ -25,5 +27,7 @@ module_dict = {
     "UNetGaetan": UNet,
     "DeepLabGaetan" : DeepLabV3,
     "ASPP" : ASPP,
-    "PSPNet" : PSPNet
+    "PSPNet" : PSPNet,
+    "segformer-b5-v2" : SegformerB5V2,
+    "deeplab-v3plus-ocr" : DeepLabV3PlusOCR
 }
