@@ -1,12 +1,13 @@
 """
 Main script.
 """
-from typing import List, Tuple
+from typing import Tuple
 import argparse
 import gc
 import os
 import numpy as np
 import random
+import ast
 
 import albumentations as A
 import mlflow
@@ -17,6 +18,7 @@ from torch import Generator
 from torch.utils.data import DataLoader, random_split
 
 from functions.download_data import (
+    get_file_system,
     get_patchs_labels,
     normalization_params,
     get_golden_paths,
@@ -27,7 +29,13 @@ from functions.filter import filter_indices_from_labels
 
 gdal.UseExceptions()
 
+
 # Command-line arguments
+def str_to_list(arg):
+    # Convert the argument string to a list
+    return ast.literal_eval(arg)
+
+
 parser = argparse.ArgumentParser(description="PyTorch Training Satellite Images")
 parser.add_argument(
     "--remote_server_uri",
@@ -66,19 +74,10 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
-    "--mayotte_2022",
-    type=int,
-    choices=[0, 1],
-    default=1,
-    help="1 if Mayotte 2022 dataset is used, 0 otherwise",
-    required=True,
-)
-parser.add_argument(
-    "--martinique_2022",
-    type=int,
-    choices=[0, 1],
-    default=0,
-    help="1 if Martinique 2022 dataset is used, 0 otherwise",
+    "--datasets",
+    type=str_to_list,
+    default="['mayotte_2019', 'mayotte_2020', 'mayotte_2021']",
+    help="List of datasets to be used for training",
     required=True,
 )
 parser.add_argument(
@@ -260,8 +259,8 @@ def main(
     run_name: str,
     task: str,
     source: str,
-    deps: List[str],
-    years: List[str],
+    deps: Tuple[str],
+    years: Tuple[str],
     tiles_size: int,
     augment_size: int,
     type_labeler: str,
@@ -321,7 +320,6 @@ def main(
         patches, labels = get_patchs_labels(
             from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
         )
-
         patches.sort()
         labels.sort()
         # No filtering here
@@ -339,6 +337,7 @@ def main(
         test_patches += list(patches)
         test_labels += list(labels)
 
+
         # Get normalization parameters
         normalization_mean, normalization_std = normalization_params(
             task, source, dep, year, tiles_size, type_labeler
@@ -351,9 +350,9 @@ def main(
     golden_patches, golden_labels = get_golden_paths(
         from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
     )
-
     golden_patches.sort()
     golden_labels.sort()
+
 
     # 2- Define the transforms to apply
     # Normalization mean
@@ -394,6 +393,11 @@ def main(
     if augment_size != tiles_size:
         test_transform_list.insert(0, A.Resize(augment_size, augment_size))
     test_transform = A.Compose(test_transform_list)
+
+    # train_patches = train_patches[:100]
+    # train_labels = train_labels[:100]
+    # test_patches = test_patches[:100]
+    # test_labels = test_labels[:100]
 
     # 3- Retrieve the Dataset object given the params
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
@@ -442,81 +446,82 @@ def main(
 
     mlflow.set_tracking_uri(remote_server_uri)
     mlflow.set_experiment(experiment_name)
+    with mlflow.start_run(run_name=run_name) as run:
+        mlflow.pytorch.autolog()
+        # 7- Training the model on the training set
+        torch.cuda.empty_cache()
+        torch.set_float32_matmul_precision("medium")
+        gc.collect()
 
-    mlflow.set_tag("mlflow.runName", run_name)
+        trainer.fit(light_module, train_loader, val_loader)
 
-    mlflow.pytorch.autolog()
-    # 7- Training the model on the training set
-    torch.cuda.empty_cache()
-    torch.set_float32_matmul_precision("medium")
-    gc.collect()
+        best_model = type(light_module).load_from_checkpoint(
+            checkpoint_path=trainer.checkpoint_callback.best_model_path,
+            model=light_module.model,
+            loss=light_module.loss,
+            optimizer=light_module.optimizer,
+            optimizer_params=light_module.optimizer_params,
+            scheduler=light_module.scheduler,
+            scheduler_params=light_module.scheduler_params,
+            scheduler_interval=light_module.scheduler_interval,
+        )
 
-    trainer.fit(light_module, train_loader, val_loader)
-
-    best_model = type(light_module).load_from_checkpoint(
-        checkpoint_path=trainer.checkpoint_callback.best_model_path,
-        model=light_module.model,
-        loss=light_module.loss,
-        optimizer=light_module.optimizer,
-        optimizer_params=light_module.optimizer_params,
-        scheduler=light_module.scheduler,
-        scheduler_params=light_module.scheduler_params,
-        scheduler_interval=light_module.scheduler_interval,
-    )
-
-    # Logging the model with the associated code
-    mlflow.pytorch.log_model(
-        artifact_path="model",
-        code_paths=[
-            "src/models/",
-            "src/optim/",
-            "src/config/",
-        ],
-        pytorch_model=best_model.to("cpu"),
-    )
-
-    # Log normalization parameters
-    mlflow.log_params(
-        {
-            "normalization_mean": normalization_mean.tolist(),
-            "normalization_std": normalization_std,
-        }
-    )
-    # TODO: Add signature for inference
-
-    # 8- Test
-    trainer.test(dataloaders=[test_loader, golden_loader], ckpt_path="best")
+        # Logging the model with the associated code
+        mlflow.pytorch.log_model(
+            artifact_path="model",
+            code_paths=[
+                "src/models/",
+                "src/optim/",
+                "src/config/",
+            ],
+            pytorch_model=best_model.to("cpu"),
+        )
 
 
-def format_datasets(mayotte_2022: bool, martinique_2022: bool) -> Tuple[List[str], List[int]]:
+        # Log normalization parameters
+        mlflow.log_params(
+            {
+                "normalization_mean": normalization_mean.tolist(),
+                "normalization_std": normalization_std,
+            }
+        )
+        # TODO: Add signature for inference
+
+        # 8- Test
+        trainer.test(dataloaders=[test_loader, golden_loader], ckpt_path="best")
+        run_id = run.info.run_id
+        return run_id
+
+
+def format_datasets(args_dict: dict) -> Tuple[str, int]:
     """
     Format datasets.
 
     Args:
-        mayotte_2022 (bool): True if Mayotte 2022 dataset is used, False otherwise.
-        martinique_2022 (bool): True if Martinique 2022 dataset is used, False otherwise.
+        args_dict (dict): A dictionary containing the command-line arguments.
+
     Returns:
-        Tuple[List[str], List[int]]: List of departments and years.
+        Tuple[str, int]: A tuple containing the list of departments and years extracted from the dataset names.
+
+    Raises:
+        ValueError: If the S3 path does not exist.
+
     """
-    deps = []
-    years = []
-    if mayotte_2022:
-        deps.append("MAYOTTE_CLEAN")
-        years.append(2022)
-    if martinique_2022:
-        deps.append("MARTINIQUE")
-        years.append(2022)
-    return deps, years
+    deps, years = zip(*[item.split('_') for item in args_dict["datasets"]])
+    deps = [dep.upper() for dep in deps]
+    fs = get_file_system()
+    for dep, year in zip(deps, years):
+        s3_path = f"s3://projet-slums-detection/data-raw/{args_dict['source']}/{dep.upper()}/{year}"
+        if not fs.exists(s3_path):
+            raise ValueError(f"S3 path {s3_path} does not exist.")
+    args_dict.pop("datasets")
+    return deps, years, args_dict
 
 
 # Rajouter dans MLflow un fichier texte avc tous les nom des images used pour le training
-# Dans le prepro check si habitation ou non et mettre dans le nom du fichier
 
 if __name__ == "__main__":
     args_dict = vars(args)
-    datasets = {
-        "mayotte_2022": args_dict.pop("mayotte_2022"),
-        "martinique_2022": args_dict.pop("martinique_2022"),
-    }
-    deps, years = format_datasets(**datasets)
-    main(**args_dict, deps=deps, years=years)
+    deps, years, args_dict = format_datasets(args_dict)
+    run_id = main(**args_dict, deps=deps, years=years)
+    print(run_id)
