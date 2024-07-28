@@ -1,4 +1,4 @@
-pre-commit==3.7.1
+pre-commit==3.8.0
 geopandas==0.14.4
 astrovision==0.13.1
 mlflow==2.13.2
