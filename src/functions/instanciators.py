@@ -13,8 +13,8 @@ from s3fs import S3FileSystem
 from config.dataset import dataset_dict
 from config.loss import loss_dict
 from config.module import module_dict
-from config.task import task_dict
 from config.scheduling import scheduling_policies
+from config.task import task_dict
 
 
 def get_trainer(
@@ -81,12 +81,15 @@ def get_dataset(
         return dataset_dict[task](patchs, labels, n_bands, fs, transform)
 
 
-def get_model(module_name: str, n_bands: str, logits: bool, freeze_encoder: bool):
+def get_model(
+    module_name: str, type_labeler: str, n_bands: str, logits: bool, freeze_encoder: bool
+):
     """
     Instantiate a module based on the provided module type.
 
     Args:
         module_name (str): Type of module to instantiate.
+        type_labeler (str): Type of labeler to use.
         n_bands (int): Number of bands.
         logits (bool): Whether to use logits in the model.
         freeze_encoder (bool): Whether to freeze the encoder.
@@ -97,18 +100,16 @@ def get_model(module_name: str, n_bands: str, logits: bool, freeze_encoder: bool
     if module_name not in module_dict:
         raise ValueError("Invalid module type")
 
-    return module_dict[module_name](n_bands, logits, freeze_encoder)
+    return module_dict[module_name](n_bands, logits, freeze_encoder, type_labeler)
 
 
-def get_loss(
-    loss_name: str, building_class_weight: Optional[float], label_smoothing: Optional[float]
-):
+def get_loss(loss_name: str, weights: Optional[list], label_smoothing: Optional[float]):
     """
     Get loss function from loss function dictionary.
 
     Args:
         loss_name (str): Name of the loss function.
-        building_class_weight (float): Weights for positive
+        weights (float): Weights for positive
             examples in the loss fn.
 
     Returns:
@@ -123,7 +124,7 @@ def get_loss(
         smoothing = loss_dict[loss_name]["smoothing"]
         kwargs = loss_dict[loss_name]["kwargs"]
         if weighted:
-            kwargs["building_class_weight"] = building_class_weight
+            kwargs["weights"] = weights
         if smoothing:
             kwargs["label_smoothing"] = label_smoothing
         return loss_function(**kwargs)
@@ -144,8 +145,9 @@ def get_scheduler(scheduler_name: str):
 
 def get_lightning_module(
     module_name: str,
+    type_labeler: str,
     loss_name: str,
-    building_class_weight: float,
+    weights: list,
     label_smoothing: float,
     n_bands: str,
     logits: bool,
@@ -164,9 +166,9 @@ def get_lightning_module(
 
     Args:
         module_name (str): Module name.
+        type_labeler (str): Type of labeler to use.
         loss_name (str): Loss name.
-        building_class_weight (float): Weights for positive
-            examples in the loss fn.
+        weights (list): Weights for each classes in the loss fn.
         label_smoothing (float): Label smoothing in the loss fn.
         n_bands (str): Number of bands.
         logits (bool): Whether to use logits in the model.
@@ -187,14 +189,12 @@ def get_lightning_module(
     else:
         LightningModule = task_dict[task]
 
-    model = get_model(module_name, n_bands, logits, freeze_encoder)
+    model = get_model(module_name, type_labeler, n_bands, logits, freeze_encoder)
     if cuda:
         model.cuda()
     # TODO: losses only compatible with certain model outputs
     # depends on the logit parameter
-    loss = get_loss(
-        loss_name, building_class_weight=building_class_weight, label_smoothing=label_smoothing
-    )
+    loss = get_loss(loss_name, weights=weights, label_smoothing=label_smoothing)
 
     # TODO: faire get_optimizer with kwargs
     # TODO: AdamW ?

@@ -1,12 +1,14 @@
 from typing import Optional
-import torchvision
+
+import requests
 import torch
+import torchvision
 from torch import nn
 from torchvision.models.segmentation.deeplabv3 import DeepLabHead
 from transformers import (
-    SegformerPreTrainedModel,
-    SegformerModel,
     SegformerDecodeHead,
+    SegformerModel,
+    SegformerPreTrainedModel,
 )
 
 
@@ -193,12 +195,23 @@ class SegformerB0(SemanticSegmentationSegformer):
     SegformerB0 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+    def __new__(
+        cls,
+        n_bands="3",
+        logits: bool = True,
+        freeze_encoder: bool = False,
+        type_labeler: str = "BDTOPO",
+    ):
+        id2label = requests.get(
+            f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
+        ).json()
+        id2label = {int(k): v for k, v in id2label.items()}
+        label2id = {v: k for k, v in id2label.items()}
         model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b0",
-            num_labels=2,
-            id2label={0: "background", 1: "building"},
-            label2id={"background": 0, "building": 1},
+            num_labels=len(id2label),
+            id2label=id2label,
+            label2id=label2id,
         )
         if freeze_encoder:
             model.freeze()
@@ -210,12 +223,23 @@ class SegformerB1(SemanticSegmentationSegformer):
     SegformerB1 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+    def __new__(
+        cls,
+        n_bands="3",
+        logits: bool = True,
+        freeze_encoder: bool = False,
+        type_labeler: str = "BDTOPO",
+    ):
+        id2label = requests.get(
+            f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
+        ).json()
+        id2label = {int(k): v for k, v in id2label.items()}
+        label2id = {v: k for k, v in id2label.items()}
         model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b1",
-            num_labels=2,
-            id2label={0: "background", 1: "building"},
-            label2id={"background": 0, "building": 1},
+            num_labels=len(id2label),
+            id2label=id2label,
+            label2id=label2id,
         )
         if freeze_encoder:
             model.freeze()
@@ -227,12 +251,23 @@ class SegformerB2(SemanticSegmentationSegformer):
     SegformerB2 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+    def __new__(
+        cls,
+        n_bands="3",
+        logits: bool = True,
+        freeze_encoder: bool = False,
+        type_labeler: str = "BDTOPO",
+    ):
+        id2label = requests.get(
+            f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
+        ).json()
+        id2label = {int(k): v for k, v in id2label.items()}
+        label2id = {v: k for k, v in id2label.items()}
         model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b2",
-            num_labels=2,
-            id2label={0: "background", 1: "building"},
-            label2id={"background": 0, "building": 1},
+            num_labels=len(id2label),
+            id2label=id2label,
+            label2id=label2id,
         )
         if freeze_encoder:
             model.freeze()
@@ -244,12 +279,23 @@ class SegformerB3(SemanticSegmentationSegformer):
     SegformerB3 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+    def __new__(
+        cls,
+        n_bands="3",
+        logits: bool = True,
+        freeze_encoder: bool = False,
+        type_labeler: str = "BDTOPO",
+    ):
+        id2label = requests.get(
+            f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
+        ).json()
+        id2label = {int(k): v for k, v in id2label.items()}
+        label2id = {v: k for k, v in id2label.items()}
         model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b3",
-            num_labels=2,
-            id2label={0: "background", 1: "building"},
-            label2id={"background": 0, "building": 1},
+            num_labels=len(id2label),
+            id2label=id2label,
+            label2id=label2id,
         )
         if freeze_encoder:
             model.freeze()
@@ -261,12 +307,23 @@ class SegformerB4(SemanticSegmentationSegformer):
     SegformerB4 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+    def __new__(
+        cls,
+        n_bands="3",
+        logits: bool = True,
+        freeze_encoder: bool = False,
+        type_labeler: str = "BDTOPO",
+    ):
+        id2label = requests.get(
+            f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
+        ).json()
+        id2label = {int(k): v for k, v in id2label.items()}
+        label2id = {v: k for k, v in id2label.items()}
         model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b4",
-            num_labels=2,
-            id2label={0: "background", 1: "building"},
-            label2id={"background": 0, "building": 1},
+            num_labels=len(id2label),
+            id2label=id2label,
+            label2id=label2id,
         )
         if freeze_encoder:
             model.freeze()
@@ -278,12 +335,23 @@ class SegformerB5(SemanticSegmentationSegformer):
     SegformerB5 model.
     """
 
-    def __new__(cls, n_bands="3", logits: bool = True, freeze_encoder: bool = False):
+    def __new__(
+        cls,
+        n_bands="3",
+        logits: bool = True,
+        freeze_encoder: bool = False,
+        type_labeler: str = "BDTOPO",
+    ):
+        id2label = requests.get(
+            f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
+        ).json()
+        id2label = {int(k): v for k, v in id2label.items()}
+        label2id = {v: k for k, v in id2label.items()}
         model = SemanticSegmentationSegformer.from_pretrained(
             "nvidia/mit-b5",
-            num_labels=2,
-            id2label={0: "background", 1: "building"},
-            label2id={"background": 0, "building": 1},
+            num_labels=len(id2label),
+            id2label=id2label,
+            label2id=label2id,
         )
         if freeze_encoder:
             model.freeze()

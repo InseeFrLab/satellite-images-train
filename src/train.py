@@ -1,16 +1,18 @@
 """
 Main script.
 """
-from typing import Tuple
+
 import argparse
+import ast
 import gc
 import os
-import numpy as np
 import random
-import ast
+from typing import Tuple
 
 import albumentations as A
 import mlflow
+import numpy as np
+import requests
 import torch
 from albumentations.pytorch.transforms import ToTensorV2
 from osgeo import gdal
@@ -19,13 +21,13 @@ from torch.utils.data import DataLoader, random_split
 
 from functions.download_data import (
     get_file_system,
+    get_golden_paths,
     get_patchs_labels,
     normalization_params,
-    get_golden_paths,
     pooled_std_dev,
 )
-from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 from functions.filter import filter_indices_from_labels
+from functions.instanciators import get_dataset, get_lightning_module, get_trainer
 
 gdal.UseExceptions()
 
@@ -332,7 +334,6 @@ def main(
         test_patches += list(patches)
         test_labels += list(labels)
 
-
         # Get normalization parameters
         normalization_mean, normalization_std = normalization_params(
             task, source, dep, year, tiles_size, type_labeler
@@ -347,7 +348,6 @@ def main(
     )
     golden_patches.sort()
     golden_labels.sort()
-
 
     # 2- Define the transforms to apply
     # Normalization mean
@@ -422,10 +422,20 @@ def main(
     # 6- Create the trainer and the lightning
     trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)
 
+    weights = [
+        building_class_weight if label == "Bâtiment" else 1
+        for label in requests.get(
+            f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
+        )
+        .json()
+        .values()
+    ]
+
     light_module = get_lightning_module(
         module_name=module_name,
+        type_labeler=type_labeler,
         loss_name=loss_name,
-        building_class_weight=building_class_weight,
+        weights=weights,
         label_smoothing=label_smoothing,
         n_bands=n_bands,
         logits=bool(logits),
@@ -472,7 +482,6 @@ def main(
             pytorch_model=best_model.to("cpu"),
         )
 
-
         # Log normalization parameters
         mlflow.log_params(
             {
@@ -502,7 +511,7 @@ def format_datasets(args_dict: dict) -> Tuple[str, int]:
         ValueError: If the S3 path does not exist.
 
     """
-    deps, years = zip(*[item.split('_') for item in args_dict["datasets"]])
+    deps, years = zip(*[item.split("_") for item in args_dict["datasets"]])
     deps = [dep.upper() for dep in deps]
     fs = get_file_system()
     for dep, year in zip(deps, years):

@@ -1,11 +1,11 @@
-from torch.nn import BCELoss, CrossEntropyLoss, BCEWithLogitsLoss
 import torch
 from torch import nn
+from torch.nn import BCELoss, BCEWithLogitsLoss, CrossEntropyLoss
 
 
 class WeightedCrossEntropyLoss(CrossEntropyLoss):
-    def __new__(cls, building_class_weight: float):
-        weight = torch.Tensor([1, building_class_weight])
+    def __new__(cls, weights: list):
+        weight = torch.Tensor(weights)
         return CrossEntropyLoss(weight=weight)
 
 
@@ -36,8 +36,8 @@ class SmoothedBCEWithLogitsLoss(nn.Module):
 
 
 class WeightedBCEWithLogitsLoss(SmoothedBCEWithLogitsLoss):
-    def __new__(cls, label_smoothing: float, building_class_weight: float):
-        pos_weight = torch.Tensor([building_class_weight])
+    def __new__(cls, label_smoothing: float, weights: list):
+        pos_weight = torch.Tensor(max(weights))
         return SmoothedBCEWithLogitsLoss(label_smoothing=label_smoothing, pos_weight=pos_weight)
 
 
