@@ -1,11 +1,11 @@
 import os
 import subprocess
-from typing import List, Tuple
 from pathlib import Path
+from typing import List, Tuple
 
-from s3fs import S3FileSystem
-import yaml
 import numpy as np
+import yaml
+from s3fs import S3FileSystem
 
 
 def get_file_system() -> S3FileSystem:
@@ -84,10 +84,11 @@ def get_golden_paths(
             f"{task}/{source}/{dep}/{year}/{tiles_size}/",
             labels_path + "/",
         ]
-        # download patchs
-        subprocess.run(patch_cmd, check=True)
-        # download labels
-        subprocess.run(label_cmd, check=True)
+        with open("/dev/null", "w") as devnull:
+            # download patchs
+            subprocess.run(patch_cmd, check=True, stdout=devnull, stderr=devnull)
+            # download labels
+            subprocess.run(label_cmd, check=True, stdout=devnull, stderr=devnull)
 
         patchs = [
             f"{patchs_path}/{filename}"
@@ -216,7 +217,6 @@ def download_data(
     patch_cmd = [
         "mc",
         "cp",
-        "--quiet",
         "-r",
         f"s3/projet-slums-detection/data-preprocessed/patchs/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",  # noqa
         f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",
@@ -225,16 +225,16 @@ def download_data(
     label_cmd = [
         "mc",
         "cp",
-        "--quiet",
         "-r",
         f"s3/projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",  # noqa
         f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",
     ]
 
-    # download patchs
-    subprocess.run(patch_cmd, check=True)
-    # download labels
-    subprocess.run(label_cmd, check=True)
+    with open("/dev/null", "w") as devnull:
+        # download patchs
+        subprocess.run(patch_cmd, check=True, stdout=devnull, stderr=devnull)
+        # download labels
+        subprocess.run(label_cmd, check=True, stdout=devnull, stderr=devnull)
 
 
 def normalization_params(
