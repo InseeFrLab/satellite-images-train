@@ -230,6 +230,7 @@ def download_data(
         f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}/",
     ]
 
+    print("Downloading data from S3...\n")
     with open("/dev/null", "w") as devnull:
         # download patchs
         subprocess.run(patch_cmd, check=True, stdout=devnull, stderr=devnull)
