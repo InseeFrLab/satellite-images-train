@@ -21,7 +21,6 @@ from torch.utils.data import DataLoader, random_split
 
 from functions.download_data import (
     get_file_system,
-    get_golden_paths,
     get_patchs_labels,
     normalization_params,
     pooled_std_dev,
@@ -342,12 +341,12 @@ def main(
         normalization_stds.append(normalization_std)
         weights.append(len(indices))
 
-    # Golden test dataset
-    golden_patches, golden_labels = get_golden_paths(
-        from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
-    )
-    golden_patches.sort()
-    golden_labels.sort()
+    # # Golden test dataset
+    # golden_patches, golden_labels = get_golden_paths(
+    #     from_s3, task, source, "MAYOTTE_CLEAN", "2022", tiles_size
+    # )
+    # golden_patches.sort()
+    # golden_labels.sort()
 
     # 2- Define the transforms to apply
     # Normalization mean
@@ -398,9 +397,9 @@ def main(
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
     dataset = get_dataset(task, train_patches, train_labels, n_bands, from_s3, transform)
     test_dataset = get_dataset(task, test_patches, test_labels, n_bands, from_s3, test_transform)
-    golden_dataset = get_dataset(
-        task, golden_patches, golden_labels, n_bands, from_s3, test_transform
-    )
+    # golden_dataset = get_dataset(
+    #     task, golden_patches, golden_labels, n_bands, from_s3, test_transform
+    # )
 
     # 4- Use random_split to split the dataset
     train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
@@ -415,15 +414,15 @@ def main(
     test_loader = DataLoader(
         test_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
     )
-    golden_loader = DataLoader(
-        golden_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
-    )
+    # golden_loader = DataLoader(
+    #     golden_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
+    # )
 
     # 6- Create the trainer and the lightning
     trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)
 
     weights = [
-        building_class_weight if label == "Bâtiment" else 1.
+        building_class_weight if label == "Bâtiment" else 1.0
         for label in requests.get(
             f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
         )
@@ -492,7 +491,7 @@ def main(
         # TODO: Add signature for inference
 
         # 8- Test
-        trainer.test(dataloaders=[test_loader, golden_loader], ckpt_path="best")
+        trainer.test(dataloaders=[test_loader, test_loader], ckpt_path="best")
         run_id = run.info.run_id
         return run_id
 
