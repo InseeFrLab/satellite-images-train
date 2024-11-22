@@ -42,12 +42,8 @@ spec:
     - name: main
       dag:
         tasks:
-          # Task 0: Start pipeline
-          - name: start-pipeline
-            template: start-pipeline-wt
           # Task 1: Preprocess images
           - name: run-training-with-params
-            dependencies: [ start-pipeline ]
             template: run-training-wt
             arguments:
               parameters:
@@ -94,16 +90,6 @@ spec:
             # Pass the inputs to the task using "withParam"
             withParam: "{{workflow.parameters.training-conf-list}}"
 
-    # Now task container templates are defined
-    # Worker template for task 0 : start-pipeline
-    - name: start-pipeline-wt
-      inputs:
-      container:
-        image: busybox
-        command: [ sh, -c ]
-        args: [ "echo Starting pipeline" ]
-
-    # Worker template for task-1 : train model with params
     - name: run-training-wt
       inputs:
         parameters:
@@ -131,14 +117,9 @@ spec:
         nvidia.com/gpu.product: "NVIDIA-H100-PCIe"
       container:
         image: inseefrlab/satellite-images-train:v0.0.6
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
-          requests:
-            memory: 64Gi
-            cpu: 40
           limits:
-            memory: 128Gi
-            cpu: 50
             nvidia.com/gpu: 1
         command: ["/bin/bash", -c]
         args:

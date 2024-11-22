@@ -201,7 +201,7 @@ def get_lightning_module(
 
     # TODO: faire get_optimizer with kwargs
     # TODO: AdamW ?
-    optimizer = torch.optim.Adam
+    optimizer = torch.optim.AdamW
     optimizer_params = {"lr": lr}
 
     # TODO: faire get_scheduler with kwargs
