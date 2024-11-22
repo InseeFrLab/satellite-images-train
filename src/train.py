@@ -100,7 +100,7 @@ parser.add_argument(
 parser.add_argument(
     "--type_labeler",
     type=str,
-    choices=["BDTOPO"],
+    choices=["BDTOPO", "COSIA"],
     default="BDTOPO",
     help="Source of data used for labelling",
 )
