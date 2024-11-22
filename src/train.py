@@ -320,7 +320,7 @@ def main(
         patches.sort()
         labels.sort()
         # No filtering here
-        indices = filter_indices_from_labels(labels, -1.0, 2.0)
+        indices = filter_indices_from_labels(labels, -1.0, 2.0, type_labeler)
         train_patches += [patches[idx] for idx in indices]
         train_labels += [labels[idx] for idx in indices]
 
@@ -353,7 +353,7 @@ def main(
     # Normalization mean
     normalization_mean = np.average(
         [mean[:n_bands] for mean in normalization_means], weights=weights, axis=0
-    )
+    ).tolist()
     normalization_std = [
         pooled_std_dev(
             weights,
@@ -423,7 +423,7 @@ def main(
     trainer = get_trainer(earlystop, checkpoints, epochs, num_sanity_val_steps, accumulate_batch)
 
     weights = [
-        building_class_weight if label == "Bâtiment" else 1
+        building_class_weight if label == "Bâtiment" else 1.
         for label in requests.get(
             f"https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/{type_labeler}/{type_labeler.lower()}-id2label.json"
         )

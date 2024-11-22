@@ -190,11 +190,14 @@ def get_lightning_module(
         LightningModule = task_dict[task]
 
     model = get_model(module_name, type_labeler, n_bands, logits, freeze_encoder)
-    if cuda:
-        model.cuda()
+
     # TODO: losses only compatible with certain model outputs
     # depends on the logit parameter
     loss = get_loss(loss_name, weights=weights, label_smoothing=label_smoothing)
+
+    if cuda:
+        model.cuda()
+        loss.cuda()
 
     # TODO: faire get_optimizer with kwargs
     # TODO: AdamW ?
