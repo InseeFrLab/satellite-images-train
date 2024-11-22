@@ -4,5 +4,5 @@ ENV PROJ_LIB=/opt/conda/share/proj
 
 COPY requirements.txt requirements.txt
 
-RUN mamba install -c conda-forge gdal=3.9.3 -y &&\
+RUN conda install -c conda-forge gdal=3.9.3 -y &&\
     pip install -r requirements.txt
