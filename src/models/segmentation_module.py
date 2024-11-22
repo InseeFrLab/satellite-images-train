@@ -1,11 +1,13 @@
-"""
-"""
-from typing import Dict, Union, Optional
-import torch
+""" """
+
+from typing import Dict, Optional, Union
+
 import pytorch_lightning as pl
+import torch
 from torch import nn, optim
-from optim.metrics import IOU, positive_rate
+
 from models.components.segmentation_models import SemanticSegmentationSegformer
+from optim.metrics import IOU, positive_rate
 
 
 class SegmentationModule(pl.LightningModule):

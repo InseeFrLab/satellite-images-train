@@ -39,7 +39,7 @@ def IOU(output: torch.Tensor, labels: torch.Tensor, logits: bool) -> torch.Tenso
     # For binary, only compute IOU for positive class
     # For multiclass, compute IOU for all classes (TODO: To be discussed, "Autres" class may not be relevant)
     class_range = range(1, num_classes) if num_classes == 2 else range(num_classes)
-    
+
     for cls in class_range:
         if num_classes > 2:
             pred_cls = preds_one_hot[:, cls]
@@ -47,10 +47,10 @@ def IOU(output: torch.Tensor, labels: torch.Tensor, logits: bool) -> torch.Tenso
         else:
             pred_cls = preds_one_hot
             label_cls = labels_one_hot
-            
+
         intersection = torch.sum(pred_cls * label_cls, dim=[1, 2])
         union = torch.sum(torch.clamp(pred_cls + label_cls, max=1), dim=[1, 2])
-        
+
         iou_cls = intersection / union
 
         if num_classes == 2:
@@ -59,8 +59,11 @@ def IOU(output: torch.Tensor, labels: torch.Tensor, logits: bool) -> torch.Tenso
             # on "biaise" potentiellement l'IOU vers le haut, parce que si
             # on prédit rien on a une IOU de 1. N'arrive pas si on
             # n'a pas d'images sans pixel bâtiment
-            iou_cls = torch.tensor([1 if torch.isnan(x) else x for x in iou_cls], 
-                             dtype=torch.float, device=output.device)
+            iou_cls = torch.tensor(
+                [1 if torch.isnan(x) else x for x in iou_cls],
+                dtype=torch.float,
+                device=output.device,
+            )
 
         ious.append(torch.mean(iou_cls))
 

@@ -1,8 +1,8 @@
 """
 Scheduling policies
 """
-import torch
 
+import torch
 
 scheduling_policies = {
     "reduce_on_plateau": torch.optim.lr_scheduler.ReduceLROnPlateau,
