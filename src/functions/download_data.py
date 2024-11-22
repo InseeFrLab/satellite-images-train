@@ -236,6 +236,7 @@ def download_data(
         subprocess.run(patch_cmd, check=True, stdout=devnull, stderr=devnull)
         # download labels
         subprocess.run(label_cmd, check=True, stdout=devnull, stderr=devnull)
+    print("Downloading finished!\n")
 
 
 def normalization_params(
