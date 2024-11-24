@@ -64,12 +64,19 @@ def IOU(output: torch.Tensor, labels: torch.Tensor, logits: bool) -> torch.Tenso
                 dtype=torch.float,
                 device=output.device,
             )
+        else:
+            # TODO: For now we do the same but to adjust soon
+            iou_cls = torch.tensor(
+                [1 if torch.isnan(x) else x for x in iou_cls],
+                dtype=torch.float,
+                device=output.device,
+            )
 
         ious.append(torch.mean(iou_cls))
 
     # Nan could only appear in the multiclass case and we do not want to upper biased the IOU
     # TODO : depending on id2label return iou for each class
-    return torch.nanmean(torch.stack(ious))
+    return torch.mean(torch.stack(ious)), ious[1]
 
 
 def positive_rate(output: torch.Tensor, logits: bool) -> torch.Tensor:

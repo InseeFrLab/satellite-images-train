@@ -388,10 +388,10 @@ def main(
         test_transform_list.insert(0, A.Resize(augment_size, augment_size))
     test_transform = A.Compose(test_transform_list)
 
-    train_patches = train_patches[:100]
-    train_labels = train_labels[:100]
-    test_patches = test_patches[:100]
-    test_labels = test_labels[:100]
+    # train_patches = train_patches[:100]
+    # train_labels = train_labels[:100]
+    # test_patches = test_patches[:100]
+    # test_labels = test_labels[:100]
 
     # 3- Retrieve the Dataset object given the params
     # TODO: mettre en Params comme Tom a fait dans formation-mlops
@@ -484,7 +484,7 @@ def main(
         # Log normalization parameters
         mlflow.log_params(
             {
-                "normalization_mean": normalization_mean.tolist(),
+                "normalization_mean": normalization_mean,
                 "normalization_std": normalization_std,
             }
         )
