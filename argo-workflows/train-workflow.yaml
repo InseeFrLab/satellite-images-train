@@ -116,7 +116,7 @@ spec:
       nodeSelector:
         nvidia.com/gpu.product: "NVIDIA-H100-PCIe"
       container:
-        image: inseefrlab/satellite-images-train:v0.0.6
+        image: inseefrlab/satellite-images-train:v0.0.7
         imagePullPolicy: IfNotPresent
         resources:
           limits:
