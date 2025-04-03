@@ -116,7 +116,7 @@ spec:
       nodeSelector:
         nvidia.com/gpu.product: "NVIDIA-H100-PCIe"
       container:
-        image: inseefrlab/satellite-images-train:v0.0.7
+        image: inseefrlab/onyxia-python-pytorch:py3.12.6-gpu
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -127,6 +127,7 @@ spec:
             git clone https://github.com/InseeFrLab/satellite-images-train.git &&
             cd satellite-images-train/ &&
             export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT &&
+            uv sync &&
             mlflow run ~/work/satellite-images-train/ \
                 --env-manager=local \
                 --entry-point $ENTRY_POINT \
