@@ -1,12 +1,14 @@
-# Satellite image segmentation - Training
+# 🛰️ Satellite Image Segmentation – Training
 
-## Getting started
+## 🚀 Quickstart
 
-To install dependencies and set up a working environment on the SSP Cloud:
+### 1. Clone & Setup Environment
 
-```shell
+```bash
+git clone https://github.com/InseeFrLab/satellite-images-train.git
 cd satellite-images-train
-source ./setup
+uv sync
+uv run pre-commit install
 ```
 
 ## Training
