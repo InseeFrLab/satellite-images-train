@@ -62,9 +62,7 @@ class SegmentationDataset(Dataset):
 
             label = np.load(fs.open(f"s3://{self.labels[idx]}"))
         else:
-            si = SatelliteImage.from_raster(
-                file_path=self.patchs[idx], dep=None, date=None, n_bands=int(self.n_bands)
-            )
+            si = SatelliteImage.from_raster(file_path=self.patchs[idx], dep=None, date=None, n_bands=int(self.n_bands))
 
             label = np.load(self.labels[idx])
 

@@ -81,9 +81,7 @@ def get_dataset(
         return dataset_dict[task](patchs, labels, n_bands, fs, transform)
 
 
-def get_model(
-    module_name: str, type_labeler: str, n_bands: str, logits: bool, freeze_encoder: bool
-):
+def get_model(module_name: str, type_labeler: str, n_bands: str, logits: bool, freeze_encoder: bool):
     """
     Instantiate a module based on the provided module type.
 

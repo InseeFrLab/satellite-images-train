@@ -45,34 +45,18 @@ def get_golden_paths(
     if from_s3:
         fs = get_file_system()
 
-        patchs = fs.ls(
-            (
-                f"projet-slums-detection/golden-test/patchs/"
-                f"{task}/{source}/{dep}/{year}/{tiles_size}"
-            )
-        )
-        labels = fs.ls(
-            (
-                f"projet-slums-detection/golden-test/labels/"
-                f"{task}/{source}/{dep}/{year}/{tiles_size}"
-            )
-        )
+        patchs = fs.ls((f"projet-slums-detection/golden-test/patchs/{task}/{source}/{dep}/{year}/{tiles_size}"))
+        labels = fs.ls((f"projet-slums-detection/golden-test/labels/{task}/{source}/{dep}/{year}/{tiles_size}"))
     else:
-        patchs_path = (
-            f"data/data-preprocessed/golden-test/patchs/"
-            f"{task}/{source}/{dep}/{year}/{tiles_size}"
-        )
-        labels_path = (
-            f"data/data-preprocessed/golden-test/labels/{task}/{source}/{dep}/{year}/{tiles_size}"
-        )
+        patchs_path = f"data/data-preprocessed/golden-test/patchs/{task}/{source}/{dep}/{year}/{tiles_size}"
+        labels_path = f"data/data-preprocessed/golden-test/labels/{task}/{source}/{dep}/{year}/{tiles_size}"
 
         patch_cmd = [
             "mc",
             "cp",
             "--quiet",
             "-r",
-            f"s3/projet-slums-detection/golden-test/patchs/"
-            f"{task}/{source}/{dep}/{year}/{tiles_size}/",
+            f"s3/projet-slums-detection/golden-test/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/",
             patchs_path + "/",
         ]
         label_cmd = [
@@ -80,8 +64,7 @@ def get_golden_paths(
             "cp",
             "--quiet",
             "-r",
-            f"s3/projet-slums-detection/golden-test/labels/"
-            f"{task}/{source}/{dep}/{year}/{tiles_size}/",
+            f"s3/projet-slums-detection/golden-test/labels/{task}/{source}/{dep}/{year}/{tiles_size}/",
             labels_path + "/",
         ]
         with open("/dev/null", "w") as devnull:
@@ -90,11 +73,7 @@ def get_golden_paths(
             # download labels
             subprocess.run(label_cmd, check=True, stdout=devnull, stderr=devnull)
 
-        patchs = [
-            f"{patchs_path}/{filename}"
-            for filename in os.listdir(patchs_path)
-            if Path(filename).suffix != ".yaml"
-        ]
+        patchs = [f"{patchs_path}/{filename}" for filename in os.listdir(patchs_path) if Path(filename).suffix != ".yaml"]
         labels = [f"{labels_path}/{filename}" for filename in os.listdir(labels_path)]
 
     return patchs, labels
@@ -135,27 +114,16 @@ def get_patchs_labels(
         fs = get_file_system()
 
         patchs = fs.ls(
-            (
-                f"projet-slums-detection/data-preprocessed/patchs/"
-                f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
-            )
+            (f"projet-slums-detection/data-preprocessed/patchs/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}")
         )
 
         labels = fs.ls(
-            (
-                f"projet-slums-detection/data-preprocessed/labels/"
-                f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
-            )
+            (f"projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}")
         )
 
     else:
-        patchs_path = (
-            f"data/data-preprocessed/patchs/" f"{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
-        )
-        labels_path = (
-            f"data/data-preprocessed/labels/"
-            f"{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
-        )
+        patchs_path = f"data/data-preprocessed/patchs/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
+        labels_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{stage}"
 
         download_data(
             patchs_path,
@@ -169,11 +137,7 @@ def get_patchs_labels(
             train,
         )
 
-        patchs = [
-            f"{patchs_path}/{filename}"
-            for filename in os.listdir(patchs_path)
-            if Path(filename).suffix != ".yaml"
-        ]
+        patchs = [f"{patchs_path}/{filename}" for filename in os.listdir(patchs_path) if Path(filename).suffix != ".yaml"]
         labels = [f"{labels_path}/{filename}" for filename in os.listdir(labels_path)]
 
     return patchs, labels
@@ -239,9 +203,7 @@ def download_data(
     print("Downloading finished!\n")
 
 
-def normalization_params(
-    task: str, source: str, dep: str, year: str, tiles_size: str, type_labeler: str
-):
+def normalization_params(task: str, source: str, dep: str, year: str, tiles_size: str, type_labeler: str):
     """
     Get normalization params from s3.
 

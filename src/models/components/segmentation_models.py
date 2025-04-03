@@ -29,9 +29,7 @@ class DeepLabv3Module(nn.Module):
             freeze_encoder (bool): True to freeze encoder parameters.
         """
         super().__init__()
-        self.model = torchvision.models.segmentation.deeplabv3_resnet101(
-            weights="DeepLabV3_ResNet101_Weights.DEFAULT"
-        )
+        self.model = torchvision.models.segmentation.deeplabv3_resnet101(weights="DeepLabV3_ResNet101_Weights.DEFAULT")
         # 1 classe !
         self.model.classifier[4] = nn.Conv2d(256, 2, kernel_size=(1, 1), stride=(1, 1))
         self.softmax_layer = nn.Softmax(dim=1)
@@ -93,9 +91,7 @@ class SingleClassDeepLabv3Module(nn.Module):
             freeze_encoder (bool): True to freeze encoder parameters.
         """
         super().__init__()
-        self.model = torchvision.models.segmentation.deeplabv3_resnet101(
-            weights="DeepLabV3_ResNet101_Weights.DEFAULT"
-        )
+        self.model = torchvision.models.segmentation.deeplabv3_resnet101(weights="DeepLabV3_ResNet101_Weights.DEFAULT")
         # 1 classe !
         self.model.classifier = DeepLabHead(2048, 1)
         self.sigmoid_layer = nn.Sigmoid()
@@ -183,9 +179,7 @@ class SemanticSegmentationSegformer(SegformerPreTrainedModel):
 
         if labels is not None:
             # upsample logits to the images' original size
-            return nn.functional.interpolate(
-                logits, size=labels.shape[-2:], mode="bilinear", align_corners=False
-            )
+            return nn.functional.interpolate(logits, size=labels.shape[-2:], mode="bilinear", align_corners=False)
         else:
             return logits
 

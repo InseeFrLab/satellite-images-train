@@ -146,9 +146,7 @@ parser.add_argument(
     metavar="N",
     help="Number of epochs to train (default: 10)",
 )
-parser.add_argument(
-    "--lr", type=float, default=0.01, metavar="LR", help="Learning rate (default: 0.01)"
-)
+parser.add_argument("--lr", type=float, default=0.01, metavar="LR", help="Learning rate (default: 0.01)")
 parser.add_argument(
     "--momentum",
     type=float,
@@ -313,9 +311,7 @@ def main(
     weights = []
     for dep, year in zip(deps, years):
         # Get patchs and labels for training
-        patches, labels = get_patchs_labels(
-            from_s3, task, source, dep, year, tiles_size, type_labeler, train=True
-        )
+        patches, labels = get_patchs_labels(from_s3, task, source, dep, year, tiles_size, type_labeler, train=True)
         patches.sort()
         labels.sort()
         # No filtering here
@@ -324,9 +320,7 @@ def main(
         train_labels += [labels[idx] for idx in indices]
 
         # Get patches and labels for test
-        patches, labels = get_patchs_labels(
-            from_s3, task, source, dep, year, tiles_size, type_labeler, train=False
-        )
+        patches, labels = get_patchs_labels(from_s3, task, source, dep, year, tiles_size, type_labeler, train=False)
 
         patches.sort()
         labels.sort()
@@ -334,9 +328,7 @@ def main(
         test_labels += list(labels)
 
         # Get normalization parameters
-        normalization_mean, normalization_std = normalization_params(
-            task, source, dep, year, tiles_size, type_labeler
-        )
+        normalization_mean, normalization_std = normalization_params(task, source, dep, year, tiles_size, type_labeler)
         normalization_means.append(normalization_mean)
         normalization_stds.append(normalization_std)
         weights.append(len(indices))
@@ -350,9 +342,7 @@ def main(
 
     # 2- Define the transforms to apply
     # Normalization mean
-    normalization_mean = np.average(
-        [mean[:n_bands] for mean in normalization_means], weights=weights, axis=0
-    ).tolist()
+    normalization_mean = np.average([mean[:n_bands] for mean in normalization_means], weights=weights, axis=0).tolist()
     normalization_std = [
         pooled_std_dev(
             weights,
@@ -405,15 +395,9 @@ def main(
     train_dataset, val_dataset = random_split(dataset, [0.8, 0.2], generator=Generator())
 
     # 5- Create data loaders
-    train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, **kwargs
-    )
-    val_loader = DataLoader(
-        val_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
-    )
-    test_loader = DataLoader(
-        test_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
-    )
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, **kwargs)
+    val_loader = DataLoader(val_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs)
+    test_loader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs)
     # golden_loader = DataLoader(
     #     golden_dataset, batch_size=test_batch_size, shuffle=False, drop_last=True, **kwargs
     # )
